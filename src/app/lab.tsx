@@ -14,6 +14,7 @@ import { Button, Card, Chip, ErrorNote, Field, Gap, Loading, Row, Screen, Steps,
 import { Spacing } from '@/constants/theme';
 import { useAi } from '@/hooks/use-ai';
 import { useI18n } from '@/hooks/use-i18n';
+import { scheduleFollowUp } from '@/notifications';
 import { useStore } from '@/store/app-store';
 import { newId } from '@/store/ids';
 import type { OutcomeCard } from '@/store/types';
@@ -132,6 +133,7 @@ export default function Lab() {
         createdAt: now,
         followUpAt: now + FOLLOW_UP_MS,
       });
+      scheduleFollowUp(now + FOLLOW_UP_MS, s.home.followUp, title);
     }
     dispatch({
       type: 'saveSession',

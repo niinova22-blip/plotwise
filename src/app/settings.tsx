@@ -5,6 +5,7 @@ import { Share } from 'react-native';
 
 import { Button, Card, Chip, Gap, Row, Screen, Txt } from '@/components/ui';
 import { useI18n } from '@/hooks/use-i18n';
+import { cancelAllReminders } from '@/notifications';
 import type { Lang } from '@/i18n';
 import { useStore, wipeStorage } from '@/store/app-store';
 import type { Goal, Profile, ThemePref } from '@/store/types';
@@ -36,6 +37,7 @@ export default function Settings() {
   async function deleteAll() {
     if (!confirm) return setConfirm(true);
     await wipeStorage();
+    await cancelAllReminders();
     dispatch({ type: 'reset' });
     router.replace('/onboarding');
   }
