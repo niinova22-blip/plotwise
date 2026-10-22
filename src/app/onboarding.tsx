@@ -1,3 +1,4 @@
+import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -45,6 +46,7 @@ export default function Onboarding() {
 
       {step === 0 && (
         <View style={styles.hero}>
+          <Image source={require('@/assets/images/splash-icon.png')} style={styles.logo} contentFit="contain" />
           <Txt variant="caption" color="accent">
             {s.app.name}
           </Txt>
@@ -111,5 +113,6 @@ export default function Onboarding() {
 }
 
 const styles = StyleSheet.create({
-  hero: { gap: Spacing.three, paddingTop: Spacing.six },
+  hero: { gap: Spacing.three, paddingTop: Spacing.five },
+  logo: { width: 96, height: 96, marginLeft: -Spacing.three },
 });
