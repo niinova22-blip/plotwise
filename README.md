@@ -1,56 +1,61 @@
-# Welcome to your Expo app 👋
+# Plotwise
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+**Think in stories. Decide with clarity.** A mobile thinking partner that helps you question assumptions, imagine alternative futures and turn a messy problem into one small experiment. English first, Turkish included. iOS + Android from one Expo codebase.
 
-## Get started
+Plotwise is an independent product inspired by research on narrative thinking and creativity. It is not affiliated with or endorsed by any author or publisher, and it is not an intelligence test.
 
-1. Install dependencies
+## What's in v1
 
-   ```bash
-   npm install
-   ```
+| Module | What it does | Needs AI? |
+|---|---|---|
+| **Thinking Lab** (`src/app/lab.tsx`) | Describe → clarify → mark assumptions → reframe + provocation → weigh → pick a 48-hour experiment | Yes (4 calls) |
+| **Future Simulator** (`src/app/future.tsx`) | Three futures (tailwind / obstacle / pivot), two decision points with a twist, closing insight | Yes (3 calls per path) |
+| **Daily Training** (`src/app/train.tsx`) | 35 original exercise templates × variable pools, adapted to history and interests, works offline | Optional nudge |
+| **Notebook** (`src/app/notebook`) | Outcome cards from every session, experiment follow-ups after 3 days | No |
 
-2. Start the app
+All user data stays on the device (AsyncStorage). Settings include export and delete-all.
 
-   ```bash
-   npx expo start
-   ```
+## Architecture
 
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **src/app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
-
-```bash
-npm run reset-project
+```
+app (Expo SDK 58, expo-router)  ──HTTPS──▶  worker/ (Cloudflare Worker)  ──▶  model provider (adapter)
+  src/ai/contract.ts  ◀── shared types ──▶  worker/src/{schemas,prompts,providers}.ts
 ```
 
-This command will move the starter code to the **example** directory and create a blank **src/app** directory where you can start developing.
+- The app never holds API keys. It sends `{task, context, input}` plus an anonymous install id.
+- The worker owns prompts, JSON schemas (structured outputs), model choice, per-install daily quotas (KV) and crisis-flag handling.
+- Swap models/providers by changing `MODEL` / `AI_PROVIDER` in `worker/wrangler.toml` — no app release needed.
+- Without `EXPO_PUBLIC_AI_URL`, or while the worker has no key, the app runs in clearly labelled **demo mode** with canned responses.
 
-### Other setup steps
+## Run locally
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+```bash
+npm install
+npx expo start            # press w for web, or scan with a dev build
+npx tsc --noEmit && npx eslint src
+```
 
-## Learn more
+## AI proxy
 
-To learn more about developing your project with Expo, look at the following resources:
+```bash
+cd worker && npm install
+npx wrangler login
+npx wrangler kv namespace create QUOTA      # paste id into wrangler.toml
+npx wrangler secret put ANTHROPIC_API_KEY
+npx wrangler deploy                          # prints https://plotwise-ai.<you>.workers.dev
+```
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+Then point the app at it and ship over the air (no new TestFlight build needed):
 
-## Join the community
+```bash
+EXPO_PUBLIC_AI_URL=https://plotwise-ai.<you>.workers.dev npx eas-cli update --channel production -m "Enable AI"
+```
 
-Join our community of developers creating universal apps.
+## Builds
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+```bash
+npx eas-cli build -p ios --profile production --auto-submit   # → TestFlight
+npx eas-cli build -p android --profile preview                # → installable APK
+```
+
+See `docs/PLAN.md` for the product plan and `docs/DECISIONS.md` for decisions made along the way.

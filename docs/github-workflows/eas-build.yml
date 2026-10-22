@@ -1,0 +1,29 @@
+name: EAS build (manual)
+
+# Requires repository secret EXPO_TOKEN (expo.dev → Account settings → Access tokens).
+on:
+  workflow_dispatch:
+    inputs:
+      platform:
+        description: ios, android or all
+        default: ios
+      submit:
+        description: Submit iOS build to TestFlight
+        type: boolean
+        default: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+      - run: npm ci
+      - run: eas build --platform ${{ inputs.platform }} --profile production --non-interactive --no-wait ${{ inputs.submit && '--auto-submit' || '' }}

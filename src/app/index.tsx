@@ -1,98 +1,170 @@
-import * as Device from 'expo-device';
-import { Platform, StyleSheet } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { Redirect, router, type Href } from 'expo-router';
+import { useState } from 'react';
+import { Pressable, StyleSheet, View } from 'react-native';
 
-import { AnimatedIcon } from '@/components/animated-icon';
-import { HintRow } from '@/components/hint-row';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { WebBadge } from '@/components/web-badge';
-import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
+import { dailyCount } from '@/exercises/generator';
+import { Card, DemoBadge, Screen, tap, Txt } from '@/components/ui';
+import { Radius, Spacing, type ThemeColor } from '@/constants/theme';
+import { useI18n } from '@/hooks/use-i18n';
+import { useTheme } from '@/hooks/use-theme';
+import { fmt } from '@/i18n';
+import { useStore } from '@/store/app-store';
+import { dayKey, weekDayKeys } from '@/store/ids';
 
-function getDevMenuHint() {
-  if (Platform.OS === 'web') {
-    return <ThemedText type="small">use browser devtools</ThemedText>;
-  }
-  if (Device.isDevice) {
-    return (
-      <ThemedText type="small">
-        shake device or press <ThemedText type="code">m</ThemedText> in terminal
-      </ThemedText>
-    );
-  }
-  const shortcut = Platform.OS === 'android' ? 'cmd+m (or ctrl+m)' : 'cmd+d';
+function greeting(s: ReturnType<typeof useI18n>['s']) {
+  const h = new Date().getHours();
+  return h < 12 ? s.home.greetingMorning : h < 18 ? s.home.greetingAfternoon : s.home.greetingEvening;
+}
+
+function Door({
+  index,
+  title,
+  body,
+  color,
+  href,
+}: {
+  index: string;
+  title: string;
+  body: string;
+  color: ThemeColor;
+  href: Href;
+}) {
+  const theme = useTheme();
   return (
-    <ThemedText type="small">
-      press <ThemedText type="code">{shortcut}</ThemedText>
-    </ThemedText>
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={title}
+      onPress={() => {
+        tap();
+        router.push(href);
+      }}
+      style={({ pressed }) => [
+        styles.door,
+        { backgroundColor: theme.surface, borderColor: theme.border, opacity: pressed ? 0.85 : 1 },
+      ]}>
+      <Txt variant="caption" color={color}>
+        {index}
+      </Txt>
+      <Txt variant="title">{title}</Txt>
+      <Txt color="textSecondary">{body}</Txt>
+      <View style={[styles.doorArrow, { backgroundColor: theme[color] }]}>
+        <Txt variant="heading" color="onAccent">
+          →
+        </Txt>
+      </View>
+    </Pressable>
   );
 }
 
-export default function HomeScreen() {
+export default function Home() {
+  const { data } = useStore();
+  const { s } = useI18n();
+  const theme = useTheme();
+  const [now] = useState(() => Date.now());
+
+  if (!data.profile.onboarded) return <Redirect href="/onboarding" />;
+
+  const today = dayKey(now);
+  const doneToday = data.training.filter((t) => t.day === today).length;
+  const trainingDone = doneToday >= dailyCount(data.profile.minutes);
+  const week = weekDayKeys(now);
+  const practiced = new Set(data.training.map((t) => t.day));
+  const weekCount = week.filter((d) => practiced.has(d)).length;
+  const dueFollowUp = data.cards.find(
+    (c) => c.kind === 'experiment' && c.followUpAt && c.followUpAt <= now && !c.followUpNote,
+  );
+
+  const header = (
+    <View style={styles.topRow}>
+      <Pressable accessibilityRole="button" hitSlop={10} onPress={() => router.push('/notebook')}>
+        <Txt variant="small" color="textSecondary">
+          {s.home.notebook}
+        </Txt>
+      </Pressable>
+      <DemoBadge />
+      <Pressable accessibilityRole="button" hitSlop={10} onPress={() => router.push('/settings')}>
+        <Txt variant="small" color="textSecondary">
+          {s.home.settings}
+        </Txt>
+      </Pressable>
+    </View>
+  );
+
   return (
-    <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
-        <ThemedView style={styles.heroSection}>
-          <AnimatedIcon />
-          <ThemedText type="title" style={styles.title}>
-            Welcome to&nbsp;Expo
-          </ThemedText>
-        </ThemedView>
+    <Screen back={false}>
+      {header}
+      <View style={styles.intro}>
+        <Txt variant="caption" color="textSecondary">
+          {greeting(s)}
+        </Txt>
+        <Txt variant="display">{s.home.question}</Txt>
+      </View>
 
-        <ThemedText type="code" style={styles.code}>
-          get started
-        </ThemedText>
+      {dueFollowUp && (
+        <Card accent="experiment" onPress={() => router.push(`/notebook/${dueFollowUp.id}`)}>
+          <Txt variant="caption" color="experiment">
+            {s.home.followUp}
+          </Txt>
+          <Txt variant="heading">{dueFollowUp.title}</Txt>
+        </Card>
+      )}
 
-        <ThemedView type="backgroundElement" style={styles.stepContainer}>
-          <HintRow
-            title="Try editing"
-            hint={<ThemedText type="code">src/app/index.tsx</ThemedText>}
-          />
-          <HintRow title="Dev tools" hint={getDevMenuHint()} />
-          <HintRow
-            title="Fresh start"
-            hint={<ThemedText type="code">npm run reset-project</ThemedText>}
-          />
-        </ThemedView>
+      <Door index="01" title={s.home.labTitle} body={s.home.labBody} color="reframe" href="/lab" />
+      <Door index="02" title={s.home.futureTitle} body={s.home.futureBody} color="future" href="/future" />
+      <Door
+        index="03"
+        title={s.home.trainTitle}
+        body={trainingDone ? s.home.todayDone : fmt(s.home.trainBody, { minutes: data.profile.minutes })}
+        color="experiment"
+        href="/train"
+      />
 
-        {Platform.OS === 'web' && <WebBadge />}
-      </SafeAreaView>
-    </ThemedView>
+      <View style={styles.week}>
+        <View style={styles.weekDots}>
+          {week.map((d) => (
+            <View
+              key={d}
+              style={[
+                styles.weekDot,
+                { backgroundColor: practiced.has(d) ? theme.experiment : theme.surfaceAlt },
+                d === today && { borderWidth: 2, borderColor: theme.text },
+              ]}
+            />
+          ))}
+        </View>
+        <Txt variant="small" color="textSecondary">
+          {fmt(s.home.weekStat, { count: weekCount })}
+        </Txt>
+      </View>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
+  topRow: {
     flexDirection: 'row',
-  },
-  safeArea: {
-    flex: 1,
-    paddingHorizontal: Spacing.four,
+    justifyContent: 'space-between',
     alignItems: 'center',
-    gap: Spacing.three,
-    paddingBottom: BottomTabInset + Spacing.three,
-    maxWidth: MaxContentWidth,
+    paddingTop: Spacing.three,
   },
-  heroSection: {
+  intro: { gap: Spacing.two, paddingVertical: Spacing.four },
+  door: {
+    borderRadius: Radius.lg,
+    borderWidth: StyleSheet.hairlineWidth,
+    padding: Spacing.four,
+    gap: Spacing.two,
+  },
+  doorArrow: {
+    position: 'absolute',
+    right: Spacing.four,
+    top: Spacing.four,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
-    flex: 1,
-    paddingHorizontal: Spacing.four,
-    gap: Spacing.four,
   },
-  title: {
-    textAlign: 'center',
-  },
-  code: {
-    textTransform: 'uppercase',
-  },
-  stepContainer: {
-    gap: Spacing.three,
-    alignSelf: 'stretch',
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.four,
-    borderRadius: Spacing.four,
-  },
+  week: { alignItems: 'center', gap: Spacing.two, paddingTop: Spacing.three },
+  weekDots: { flexDirection: 'row', gap: Spacing.two },
+  weekDot: { width: 14, height: 14, borderRadius: 7 },
 });

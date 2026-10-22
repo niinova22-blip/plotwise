@@ -1,0 +1,16 @@
+name = "plotwise-ai"
+main = "src/index.ts"
+compatibility_date = "2026-09-01"
+compatibility_flags = ["nodejs_compat"]
+
+[vars]
+AI_PROVIDER = "anthropic"
+MODEL = "claude-opus-5-5"
+DAILY_LIMIT = "40"
+
+# Create with: npx wrangler kv namespace create QUOTA  (then paste the id here)
+# [[kv_namespaces]]
+# binding = "QUOTA"
+# id = "<id>"
+
+# Secret (never commit): npx wrangler secret put ANTHROPIC_API_KEY
