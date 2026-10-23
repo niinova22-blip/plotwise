@@ -44,6 +44,10 @@ const en = {
     personal: 'Personal decisions',
     general: 'General thinking',
   },
+  mentor: {
+    name: 'Ozan',
+    skip: 'Skip',
+  },
   home: {
     greetingMorning: 'Good morning',
     greetingAfternoon: 'Good afternoon',

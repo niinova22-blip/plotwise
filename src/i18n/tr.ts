@@ -46,6 +46,10 @@ const tr: Dict = {
     personal: 'Kişisel kararlar',
     general: 'Genel düşünme',
   },
+  mentor: {
+    name: 'Ozan',
+    skip: 'Atla',
+  },
   home: {
     greetingMorning: 'Günaydın',
     greetingAfternoon: 'İyi günler',

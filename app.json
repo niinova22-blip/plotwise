@@ -50,7 +50,8 @@
           }
         }
       ],
-      "expo-localization"
+      "expo-localization",
+      ["expo-audio", { "microphonePermission": false, "recordAudioAndroid": false }]
     ],
     "experiments": {
       "typedRoutes": true,
