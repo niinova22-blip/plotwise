@@ -16,9 +16,15 @@ import { playClip, stopClip } from './voice/player';
 const AUTO_ADVANCE_MS = 900;
 /** How long the gesture lingers after he stops talking. */
 const GESTURE_TAIL_MS = 1400;
+/** Extra time after a recording before the line counts as finished. */
+const CLIP_TAIL_MS = 200;
 
 export type Mentor = {
   say: (lines: Line[]) => Promise<void>;
+  /** Like say(), but also returns the token so the caller can cancel() it on unmount. */
+  start: (lines: Line[]) => { done: Promise<void>; token: number };
+  /** Stops and clears the given say() if it is still the one playing. */
+  cancel: (token: number) => void;
   /**
    * Reacts to something the user wrote: picks a fitting line (or a safe
    * universal one) and says it. Resolves when he has finished. A crisis
@@ -98,16 +104,24 @@ export function MentorProvider({ children }: { children: ReactNode }) {
   // Start a line.
   useEffect(() => {
     if (q.status !== 'speaking' || !plan) return;
-    const played = plan.clip ? playClip(plan.clip) : false;
-    const envelope = played && plan.clip ? plan.clip.env : plan.procedural;
-    const duration = played && plan.clip ? plan.clip.durationMs : plan.procedural.length * FRAME_MS;
-    elapsed.set(0);
-    env.set(envelope);
-    const t = setTimeout(() => dispatch({ type: 'lineEnded' }), duration);
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const run = (envelope: number[], duration: number) => {
+      elapsed.set(0);
+      env.set(envelope);
+      timer = setTimeout(() => dispatch({ type: 'lineEnded' }), duration);
+    };
+    // A recording starts the mouth and the timer when its sound actually begins,
+    // and gets a short tail so the last syllable is never cut.
+    const clip = plan.clip;
+    const played = clip ? playClip(clip, () => run(clip.env, clip.durationMs + CLIP_TAIL_MS)) : false;
+    if (!played) {
+      stopClip(); // a recorded line may still be playing if the user tapped ahead
+      run(plan.procedural, plan.procedural.length * FRAME_MS);
+    }
     return () => {
-      clearTimeout(t);
-      stopClip();
+      clearTimeout(timer);
       env.set([]);
+      // The clip itself is stopped by the next line, by Skip/cancel, or when the queue ends.
     };
   }, [q.status, q.index, q.token, plan, env, elapsed]);
 
@@ -140,14 +154,14 @@ export function MentorProvider({ children }: { children: ReactNode }) {
     dispatch({ type: 'skip' });
   }, [lang]);
 
-  const say = useCallback((lines: Line[]) => {
+  const start = useCallback((lines: Line[]) => {
     const token = ++tokenRef.current;
     // Anything still waiting on an older say() is released: it was replaced.
     for (const [t, resolve] of resolvers.current) {
       resolve();
       resolvers.current.delete(t);
     }
-    return new Promise<void>((resolve) => {
+    const done = new Promise<void>((resolve) => {
       // In quiet mode Ozan is hidden and silent; the step goes straight to its inputs.
       if (lines.length === 0 || quiet) {
         resolve();
@@ -156,7 +170,11 @@ export function MentorProvider({ children }: { children: ReactNode }) {
       resolvers.current.set(token, resolve);
       dispatch({ type: 'say', lines, token });
     });
+    return { done, token };
   }, [quiet]);
+
+  const say = useCallback((lines: Line[]) => start(lines).done, [start]);
+  const cancel = useCallback((token: number) => dispatch({ type: 'cancel', token }), []);
 
   const react = useCallback(
     async (text: string) => {
@@ -176,6 +194,8 @@ export function MentorProvider({ children }: { children: ReactNode }) {
 
   const value: Mentor = {
     say,
+    start,
+    cancel,
     react,
     advance,
     skip,

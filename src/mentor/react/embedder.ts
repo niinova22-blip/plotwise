@@ -1,9 +1,14 @@
 import { useCallback, useMemo } from 'react';
 import { models, setTelemetryEnabled, useTextEmbedder } from 'react-native-executorch';
 
-/** Must match tools/embed/build.py so prototype vectors live in the same space. */
-const MODEL = models.textEmbeddings.PARAPHRASE_MULTILINGUAL_MINILM_L12_V2.DEFAULT;
-const MAX_CHARS = 1200;
+/**
+ * Must match tools/embed/build.py so prototype vectors live in the same space.
+ * Pinned to the fp16 Core ML export, the closest to the fp32 model the
+ * thresholds were tuned on (DEFAULT varies by device).
+ */
+const MODEL = models.textEmbeddings.PARAPHRASE_MULTILINGUAL_MINILM_L12_V2.COREML_FP16;
+/** About the 128 tokens the Python side embeds. */
+const MAX_CHARS = 500;
 
 setTelemetryEnabled(false);
 

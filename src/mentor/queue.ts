@@ -16,6 +16,8 @@ export type QueueAction =
   | { type: 'lineEnded' }
   | { type: 'advance' }
   | { type: 'skip' }
+  /** The screen that started `token` went away; clear it if it is still the current one. */
+  | { type: 'cancel'; token: number }
   | { type: 'reset' };
 
 export const initialQueue: QueueState = { lines: [], index: 0, status: 'idle', token: 0 };
@@ -33,6 +35,8 @@ export function queueReducer(state: QueueState, action: QueueAction): QueueState
         : { ...state, status: 'done' };
     case 'skip':
       return { ...state, status: 'done' };
+    case 'cancel':
+      return state.token === action.token ? { ...initialQueue, token: state.token } : state;
     case 'reset':
       return { ...initialQueue, token: state.token };
   }

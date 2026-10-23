@@ -51,3 +51,16 @@ test('20 rapid advances never push index past the end', () => {
 test('say with no lines is immediately done', () => {
   expect(run(initialQueue, { type: 'say', lines: [], token: 3 }).status).toBe('done');
 });
+
+test('cancel of the current say clears it, so no stale line lingers', () => {
+  const s = run(initialQueue, { type: 'say', lines, token: 4 }, { type: 'cancel', token: 4 });
+  expect(s.status).toBe('idle');
+  expect(s.lines).toHaveLength(0);
+  expect(s.token).toBe(4);
+});
+
+test('cancel of an older say leaves the newer one alone', () => {
+  const s = run(initialQueue, { type: 'say', lines, token: 5 }, { type: 'cancel', token: 4 });
+  expect(s.status).toBe('speaking');
+  expect(s.lines).toHaveLength(2);
+});

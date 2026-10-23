@@ -12,18 +12,23 @@ export function useNarration(lines: Line[] | null, key: string): boolean {
   const m = useMentor();
   const [doneKey, setDoneKey] = useState<string | null>(null);
 
-  const start = useEffectEvent((k: string, live: { current: boolean }) => {
-    if (!lines || lines.length === 0) return;
-    m.say(lines).then(() => {
+  const begin = useEffectEvent((k: string, live: { current: boolean }) => {
+    if (!lines || lines.length === 0) return null;
+    const { done, token } = m.start(lines);
+    done.then(() => {
       if (live.current) setDoneKey(k);
     });
+    return token;
   });
+  const stop = useEffectEvent((token: number) => m.cancel(token));
 
   useEffect(() => {
     const live = { current: true };
-    start(key, live);
+    const token = begin(key, live);
     return () => {
       live.current = false;
+      // Leaving the step (or the screen) silences it, so Ozan never finishes another screen's lines.
+      if (token !== null) stop(token);
     };
   }, [key]);
 
