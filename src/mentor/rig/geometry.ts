@@ -95,7 +95,7 @@ export function mouth(smile: number, jaw: number) {
   };
 }
 
-const SHOULDER: [number, number] = [100, 252];
+const SHOULDER: [number, number] = [105, 255];
 const SAMPLES = 9;
 
 /**
@@ -116,7 +116,7 @@ export function arm(wx: number, wy: number, ex: number, ey: number) {
     const dy = 2 * u * (ey - sy) + 2 * t * (wy - ey);
     const len = Math.hypot(dx, dy) || 1;
     // Slight belly at the forearm reads as cloth, not a tube.
-    const r = 16 - 6 * t + Math.sin(t * Math.PI) * 1.5;
+    const r = 13 - 4 * t + Math.sin(t * Math.PI) * 1.2;
     const nx = -dy / len;
     const ny = dx / len;
     left.push([px + nx * r, py + ny * r]);
@@ -125,8 +125,8 @@ export function arm(wx: number, wy: number, ex: number, ey: number) {
   const d0x = ex - sx;
   const d0y = ey - sy;
   const d0 = Math.hypot(d0x, d0y) || 1;
-  const capX = sx - (d0x / d0) * 18;
-  const capY = sy - (d0y / d0) * 18;
+  const capX = sx - (d0x / d0) * 15;
+  const capY = sy - (d0y / d0) * 15;
   let d = `M${f(right[0][0])} ${f(right[0][1])} Q${f(capX)} ${f(capY)} ${f(left[0][0])} ${f(left[0][1])}`;
   for (let i = 1; i < SAMPLES; i++) d += ` L${f(left[i][0])} ${f(left[i][1])}`;
   for (let i = SAMPLES - 1; i >= 0; i--) d += ` L${f(right[i][0])} ${f(right[i][1])}`;

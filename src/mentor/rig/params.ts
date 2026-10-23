@@ -99,7 +99,7 @@ export const MOODS: Record<Mood, MoodPreset> = {
 
 /** Wrist, elbow and hand rotation for each gesture; vis = hand out of the sleeve. */
 export const POSES: Record<Gesture, { w: [number, number]; e: [number, number]; r: number; vis: 0 | 1 }> = {
-  rest: { w: [139, 291], e: [96, 302], r: 80, vis: 0 },
+  rest: { w: [146, 292], e: [100, 304], r: 80, vis: 0 },
   open: { w: [86, 252], e: [60, 298], r: -14, vis: 1 },
   raise: { w: [78, 228], e: [52, 278], r: -22, vis: 1 },
   chest: { w: [128, 274], e: [86, 304], r: 48, vis: 1 },
