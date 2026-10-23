@@ -22,6 +22,9 @@ Her oturum 5–10 dakikada **somut bir çıktı kartıyla** biter: sorgulanmış
 ## Ücretsiz / Premium (Aşama 5'te)
 Ücretsiz: sınırsız çevrimdışı antrenman, haftada ~3 YZ oturumu, basit simülasyon. Premium: daha fazla oturum, derin simülasyon, geçmiş kararları karşılaştırma, programlar (Girişimci / Kariyer / Yaratıcılık), aylık rapor. Fiyat: RevenueCat ile uzaktan yapılandırılır ve test edilir.
 
+## Mentör Ozan
+Bilge, sıcak bir rehber (Skia ile canlandırılmış, sesli). Ana ekranda karşılar, her adımı anlatır, yazdıklarına anlamına göre tepki verir; dokununca ilerler, Atla ile geçilir; Ayarlar’da ses kapatma ve Sade mod. Ayrıntı: docs/superpowers/specs/2026-10-23-mentor-design.md
+
 ## Yol haritası
 1. Ürün tasarımı ✅
 2. İlk çalışan sürüm (Lab, Simülatör, Antrenman, Defter) ✅
