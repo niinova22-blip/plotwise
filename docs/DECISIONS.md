@@ -14,3 +14,5 @@
 | 2026-10-23 | No paywall in the test phase; per-install daily quota (40 calls) on the worker | Learn which features people repeat before pricing; cap cost meanwhile. |
 | 2026-10-23 | Demo mode when the proxy is missing or unconfigured | Builds can ship to TestFlight before the AI key exists; enabling AI later is an OTA update. |
 | 2026-10-23 | Crisis flag in every AI schema → support screen with emergency + findahelpline.com | Store safety requirements and user wellbeing. |
+| 2026-10-23 | Progress screen is count-based (sessions, 4-week rhythm, streak, experiments reflected on, exercise variety); no scores | Keeps the onboarding promise "no scores, no labels" while still showing momentum and nudging variety. |
+| 2026-10-23 | iOS only for now — no Android build or Play Store release | Founder's decision. |

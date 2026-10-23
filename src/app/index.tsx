@@ -119,7 +119,11 @@ export default function Home() {
         href="/train"
       />
 
-      <View style={styles.week}>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={s.home.seeProgress}
+        onPress={() => router.push('/progress')}
+        style={styles.week}>
         <View style={styles.weekDots}>
           {week.map((d) => (
             <View
@@ -135,7 +139,10 @@ export default function Home() {
         <Txt variant="small" color="textSecondary">
           {fmt(s.home.weekStat, { count: weekCount })}
         </Txt>
-      </View>
+        <Txt variant="small" color="accent">
+          {s.home.seeProgress}
+        </Txt>
+      </Pressable>
     </Screen>
   );
 }

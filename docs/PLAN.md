@@ -26,7 +26,7 @@ Her oturum 5–10 dakikada **somut bir çıktı kartıyla** biter: sorgulanmış
 1. Ürün tasarımı ✅
 2. İlk çalışan sürüm (Lab, Simülatör, Antrenman, Defter) ✅
 3. Test: TestFlight + 15–30 kullanıcı; metrikler: ilk oturumu bitirme, D7 dönüş, "kart faydalı mıydı?"
-4. Kişiselleştirme: gelişim paneli (sayım temelli), oturumlar arası bağlantı
+4. Kişiselleştirme: gelişim paneli (sayım temelli) ✅, oturumlar arası bağlantı
 5. Gelir modeli: RevenueCat, paywall, fiyat deneyleri
 6. Yayın: isim/marka taraması, mağaza metinleri (önce EN), gizlilik etiketleri
 
