@@ -31,7 +31,7 @@ export default function Train() {
 
   async function nudge() {
     const out = await ai.call('train.feedback', {
-      type: s.train.types[exercise.type],
+      type: exercise.type,
       prompt: exercise.prompt,
       answer: answer.trim(),
     });

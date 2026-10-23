@@ -16,3 +16,5 @@
 | 2026-10-23 | Crisis flag in every AI schema → support screen with emergency + findahelpline.com | Store safety requirements and user wellbeing. |
 | 2026-10-23 | Progress screen is count-based (sessions, 4-week rhythm, streak, experiments reflected on, exercise variety); no scores | Keeps the onboarding promise "no scores, no labels" while still showing momentum and nudging variety. |
 | 2026-10-23 | iOS only for now — no Android build or Play Store release | Founder's decision. |
+| 2026-10-23 | **No AI for now**: Lab, Simulator and training nudges run on an on-device engine (`src/ai/offline`) — topic detection, original EN/TR content packs, the user's own doubted assumptions and choices drive the picks; offline crisis phrase check | Founder's choice: no server, no cost. Testers use iPhone 11 (no Apple Intelligence). The worker stays in the repo; setting `EXPO_PUBLIC_AI_URL` switches back to the AI path with the same contract. |
+| 2026-10-23 | Lab lets users add their own assumption (starts as "might be wrong") | Offline picks are generic; the user's own doubt makes the session personal. |

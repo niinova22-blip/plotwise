@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { dailyCount } from '@/exercises/generator';
-import { Card, DemoBadge, Screen, tap, Txt } from '@/components/ui';
+import { Card, Screen, tap, Txt } from '@/components/ui';
 import { Radius, Spacing, type ThemeColor } from '@/constants/theme';
 import { useI18n } from '@/hooks/use-i18n';
 import { useTheme } from '@/hooks/use-theme';
@@ -81,7 +81,6 @@ export default function Home() {
           {s.home.notebook}
         </Txt>
       </Pressable>
-      <DemoBadge />
       <Pressable accessibilityRole="button" hitSlop={10} onPress={() => router.push('/settings')}>
         <Txt variant="small" color="textSecondary">
           {s.home.settings}

@@ -1,14 +1,9 @@
 import type { AiContext, AiErrorBody, AiInput, AiOutput, AiTask } from './contract';
-import { demoRespond } from './demo';
+import { offlineRespond } from './offline';
 
 const AI_URL = process.env.EXPO_PUBLIC_AI_URL;
 
 let serverUnconfigured = false;
-
-/** True when responses are canned samples: no proxy URL, or the proxy has no model key yet. */
-export function isDemoMode() {
-  return !AI_URL || serverUnconfigured;
-}
 
 export class AiError extends Error {
   constructor(
@@ -20,7 +15,7 @@ export class AiError extends Error {
 }
 
 /**
- * Runs one AI task through the proxy. API keys live only on the proxy;
+ * Runs one thinking task: through the proxy when configured, otherwise on device. API keys live only on the proxy;
  * the app identifies itself with an anonymous install id used for quotas.
  */
 export async function runAi<T extends AiTask>(
@@ -29,7 +24,7 @@ export async function runAi<T extends AiTask>(
   context: AiContext,
   installId: string,
 ): Promise<AiOutput<T>> {
-  if (!AI_URL || serverUnconfigured) return demoRespond(task, input, context);
+  if (!AI_URL || serverUnconfigured) return offlineRespond(task, input, context);
 
   let res: Response;
   try {
@@ -52,7 +47,7 @@ export async function runAi<T extends AiTask>(
     if (body?.error === 'unconfigured') {
       // Lets builds ship before the proxy has a key; flips to real AI once it does.
       serverUnconfigured = true;
-      return demoRespond(task, input, context);
+      return offlineRespond(task, input, context);
     }
     throw new AiError(body?.error ?? 'upstream', body?.message);
   }

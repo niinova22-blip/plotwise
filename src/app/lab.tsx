@@ -34,6 +34,7 @@ export default function Lab() {
   const [answers, setAnswers] = useState<string[]>([]);
   const [assumptions, setAssumptions] = useState<LabAssumptionsRes['assumptions']>([]);
   const [verdicts, setVerdicts] = useState<Record<number, Verdict>>({});
+  const [ownAssumption, setOwnAssumption] = useState('');
   const [reframe, setReframe] = useState<LabReframeRes | null>(null);
   const [chosenReframe, setChosenReframe] = useState<number | null>(null);
   const [provocationAnswer, setProvocationAnswer] = useState('');
@@ -225,9 +226,11 @@ export default function Lab() {
           {assumptions.map((a, i) => (
             <Card key={i} accent="assumption">
               <Txt variant="heading">{a.text}</Txt>
-              <Txt variant="small" color="textSecondary">
-                {a.why}
-              </Txt>
+              {a.why ? (
+                <Txt variant="small" color="textSecondary">
+                  {a.why}
+                </Txt>
+              ) : null}
               <Row>
                 {(
                   [
@@ -247,6 +250,19 @@ export default function Lab() {
               </Row>
             </Card>
           ))}
+          <Field value={ownAssumption} onChangeText={setOwnAssumption} placeholder={s.lab.ownAssumption} minHeight={56} />
+          {ownAssumption.trim().length > 3 && (
+            <Button
+              label={s.lab.addAssumption}
+              variant="secondary"
+              onPress={() => {
+                // The user's own doubt is the most interesting one, so it starts as "might be wrong".
+                setVerdicts({ ...verdicts, [assumptions.length]: 'wrong' });
+                setAssumptions([...assumptions, { text: ownAssumption.trim(), why: '' }]);
+                setOwnAssumption('');
+              }}
+            />
+          )}
         </>
       )}
 

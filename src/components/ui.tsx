@@ -18,7 +18,6 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { isDemoMode } from '@/ai/client';
 import { Fonts, MaxContentWidth, Radius, Spacing, type ThemeColor } from '@/constants/theme';
 import { useI18n } from '@/hooks/use-i18n';
 import { useTheme } from '@/hooks/use-theme';
@@ -34,10 +33,18 @@ export function Txt({
   variant = 'body',
   color = 'text',
   style,
+  children,
   ...rest
 }: TextProps & { variant?: TxtVariant; color?: ThemeColor }) {
   const theme = useTheme();
-  return <Text style={[{ color: theme[color] }, text[variant], style]} {...rest} />;
+  const { lang } = useI18n();
+  // textTransform ignores locale, which turns Turkish "i" into "I" instead of "İ".
+  const upper = variant === 'caption' && typeof children === 'string';
+  return (
+    <Text style={[{ color: theme[color] }, text[variant], upper && text.noTransform, style]} {...rest}>
+      {upper ? children.toLocaleUpperCase(lang === 'tr' ? 'tr-TR' : 'en-US') : children}
+    </Text>
+  );
 }
 
 const text = StyleSheet.create({
@@ -47,6 +54,7 @@ const text = StyleSheet.create({
   body: { fontSize: 16, lineHeight: 24 },
   small: { fontSize: 14, lineHeight: 20 },
   caption: { fontSize: 12, lineHeight: 16, fontWeight: '600', letterSpacing: 0.8, textTransform: 'uppercase' },
+  noTransform: { textTransform: 'none' },
 });
 
 export function Screen({
@@ -286,19 +294,6 @@ export function KindBadge({ kind }: { kind: CardKind }) {
   );
 }
 
-export function DemoBadge() {
-  const { s } = useI18n();
-  const theme = useTheme();
-  if (!isDemoMode()) return null;
-  return (
-    <View style={[styles.demo, { backgroundColor: theme.accentSoft }]}>
-      <Txt variant="caption" color="accent">
-        {s.common.demo}
-      </Txt>
-    </View>
-  );
-}
-
 export function Loading() {
   const { s } = useI18n();
   const theme = useTheme();
@@ -375,7 +370,6 @@ const styles = StyleSheet.create({
   step: { flex: 1, height: 4, borderRadius: 2 },
   badge: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two },
   dot: { width: 8, height: 8, borderRadius: 4 },
-  demo: { borderRadius: 999, paddingHorizontal: Spacing.two, paddingVertical: Spacing.half },
   loading: { alignItems: 'center', gap: Spacing.two, paddingVertical: Spacing.five },
   row: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.two },
   mtTwo: { marginTop: Spacing.two },
