@@ -5,6 +5,8 @@ import { useI18n } from '@/hooks/use-i18n';
 import { useStore } from '@/store/app-store';
 
 import { initialQueue, queueReducer, type QueueState } from './queue';
+import { useEmbedder } from './react/embedder';
+import { match, type Reaction } from './react/match';
 import { MOODS, type Mood } from './rig/params';
 import type { Line } from './script/types';
 import { clipFor, FRAME_MS, proceduralEnvelope } from './voice/envelope';
@@ -17,6 +19,12 @@ const GESTURE_TAIL_MS = 1400;
 
 export type Mentor = {
   say: (lines: Line[]) => Promise<void>;
+  /**
+   * Reacts to something the user wrote: picks a fitting line (or a safe
+   * universal one) and says it. Resolves when he has finished. A crisis
+   * `block` returns at once without speaking.
+   */
+  react: (text: string) => Promise<Reaction>;
   advance: () => void;
   skip: () => void;
   current: Line | null;
@@ -52,6 +60,8 @@ export function MentorProvider({ children }: { children: ReactNode }) {
   const env = useSharedValue<number[]>([]);
   const elapsed = useSharedValue(0);
 
+  const embedder = useEmbedder();
+  const recent = useRef<string[]>([]);
   const tokenRef = useRef(0);
   const resolvers = useRef(new Map<number, () => void>());
 
@@ -143,6 +153,17 @@ export function MentorProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
+  const react = useCallback(
+    async (text: string) => {
+      const vec = await embedder.embed(text);
+      const r = match(vec, text, lang, recent.current);
+      recent.current = [r.lineId, ...recent.current].slice(0, 6);
+      if (r.crisis !== 'block') await say([r.gesture ? { ...r.line, gesture: r.gesture } : r.line]);
+      return r;
+    },
+    [embedder, lang, say],
+  );
+
   const advance = useCallback(() => dispatch({ type: 'advance' }), []);
   const skip = useCallback(() => dispatch({ type: 'skip' }), []);
 
@@ -150,6 +171,7 @@ export function MentorProvider({ children }: { children: ReactNode }) {
 
   const value: Mentor = {
     say,
+    react,
     advance,
     skip,
     current,

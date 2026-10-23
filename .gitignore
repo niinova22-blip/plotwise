@@ -46,3 +46,4 @@ public/canvaskit.wasm
 tools/voice/out/
 tools/voice/.venv/
 tools/embed/.venv/
+tools/embed/out/

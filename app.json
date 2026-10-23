@@ -51,7 +51,23 @@
         }
       ],
       "expo-localization",
-      ["expo-audio", { "microphonePermission": false, "recordAudioAndroid": false }]
+      [
+        "expo-audio",
+        {
+          "microphonePermission": false,
+          "recordAudioAndroid": false
+        }
+      ],
+      "react-native-blob-util",
+      "@kesha-antonov/react-native-background-downloader",
+      [
+        "expo-build-properties",
+        {
+          "ios": {
+            "deploymentTarget": "17.0"
+          }
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

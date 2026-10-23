@@ -194,6 +194,7 @@ const en = {
     emergency: 'If you are in immediate danger, call your local emergency number.',
     helplines: 'Find a free, confidential helpline near you',
     back: 'Go back',
+    continue: 'I’m okay, let’s continue',
   },
 };
 

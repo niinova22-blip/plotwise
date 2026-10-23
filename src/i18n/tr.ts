@@ -196,6 +196,7 @@ const tr: Dict = {
     emergency: 'Acil tehlikedeysen 112’yi ara.',
     helplines: 'Yakınındaki ücretsiz ve gizli destek hattını bul',
     back: 'Geri dön',
+    continue: 'İyiyim, devam edelim',
   },
 };
 
