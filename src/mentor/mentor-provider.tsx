@@ -131,8 +131,12 @@ export function MentorProvider({ children }: { children: ReactNode }) {
     return () => clearTimeout(t);
   }, [q.status, q.token, env]);
 
-  // A new language means new lines; drop whatever was queued.
+  // A new language means new lines; drop whatever was queued. Only on a real
+  // change: child screens start speaking before this provider's effects run.
+  const langRef = useRef(lang);
   useEffect(() => {
+    if (langRef.current === lang) return;
+    langRef.current = lang;
     dispatch({ type: 'skip' });
   }, [lang]);
 
@@ -144,14 +148,15 @@ export function MentorProvider({ children }: { children: ReactNode }) {
       resolvers.current.delete(t);
     }
     return new Promise<void>((resolve) => {
-      if (lines.length === 0) {
+      // In quiet mode Ozan is hidden and silent; the step goes straight to its inputs.
+      if (lines.length === 0 || quiet) {
         resolve();
         return;
       }
       resolvers.current.set(token, resolve);
       dispatch({ type: 'say', lines, token });
     });
-  }, []);
+  }, [quiet]);
 
   const react = useCallback(
     async (text: string) => {

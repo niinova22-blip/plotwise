@@ -65,6 +65,27 @@ export default function Settings() {
       </Row>
 
       <Txt variant="caption" color="textSecondary">
+        {s.settings.mentor}
+      </Txt>
+      <Row>
+        <Txt variant="small" color="textSecondary">
+          {s.settings.mentorVoice}
+        </Txt>
+        <Chip label={s.settings.on} selected={profile.mentorVoice} onPress={() => patch({ mentorVoice: true })} />
+        <Chip label={s.settings.off} selected={!profile.mentorVoice} onPress={() => patch({ mentorVoice: false })} />
+      </Row>
+      <Row>
+        <Txt variant="small" color="textSecondary">
+          {s.settings.quietMode}
+        </Txt>
+        <Chip label={s.settings.on} selected={profile.quietMode} onPress={() => patch({ quietMode: true })} />
+        <Chip label={s.settings.off} selected={!profile.quietMode} onPress={() => patch({ quietMode: false })} />
+      </Row>
+      <Txt variant="small" color="textTertiary">
+        {s.settings.quietHint}
+      </Txt>
+
+      <Txt variant="caption" color="textSecondary">
         {s.settings.dailyMinutes}
       </Txt>
       <Row>

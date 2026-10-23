@@ -51,6 +51,19 @@ function collectScript(value: unknown, out: VoicedLine[]) {
   }
 }
 
+const byText: Partial<Record<Lang, Map<string, VoicedLine>>> = {};
+
+/**
+ * The voiced line for a sentence shown on screen (for example a clarify
+ * question picked by the offline engine), or null when it was never recorded,
+ * e.g. because it contains the user's own words.
+ */
+export function voicedLine(lang: Lang, text: string): Line | null {
+  if (!byText[lang]) byText[lang] = new Map(voicedLines(lang).map((l) => [l.text, l]));
+  const l = byText[lang]!.get(text);
+  return l ? { id: l.id, text: l.text, mood: l.mood } : null;
+}
+
 /** Every fixed sentence Ozan can say in this language: the script plus the offline content banks. */
 export function voicedLines(lang: Lang): VoicedLine[] {
   const out: VoicedLine[] = [];

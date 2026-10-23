@@ -10,6 +10,11 @@ import { dailyCount, pickExercise, type Exercise } from '@/exercises/generator';
 import { useAi } from '@/hooks/use-ai';
 import { useI18n } from '@/hooks/use-i18n';
 import { fmt } from '@/i18n';
+import { useMentor } from '@/mentor/mentor-provider';
+import { getScript, voicedLine } from '@/mentor/script';
+import type { Line } from '@/mentor/script/types';
+import { MentorStage } from '@/mentor/stage';
+import { useNarration } from '@/mentor/use-narration';
 import { useStore } from '@/store/app-store';
 import { dayKey, newId } from '@/store/ids';
 
@@ -28,6 +33,13 @@ export default function Train() {
   const [feedback, setFeedback] = useState<TrainFeedbackRes | null>(null);
   const [showCheck, setShowCheck] = useState(false);
   const [completed, setCompleted] = useState(false);
+  const [round, setRound] = useState(0);
+  const mentor = useMentor();
+  const script = getScript(lang);
+  const ready = useNarration(
+    completed ? script.train.done : round === 0 ? script.train.intro : script.train.another,
+    `${completed ? 'done' : 'ex'}-${round}-${lang}`,
+  );
 
   async function nudge() {
     const out = await ai.call('train.feedback', {
@@ -35,7 +47,11 @@ export default function Train() {
       prompt: exercise.prompt,
       answer: answer.trim(),
     });
-    if (out) setFeedback(out);
+    if (out) {
+      setFeedback(out);
+      const said = [out.feedback, out.pushFurther].map((t) => voicedLine(lang, t)).filter((l): l is Line => !!l);
+      mentor.say([...script.train.feedback, ...said]);
+    }
   }
 
   function complete() {
@@ -60,6 +76,7 @@ export default function Train() {
     setFeedback(null);
     setShowCheck(false);
     setCompleted(false);
+    setRound((r) => r + 1);
     ai.setStatus('idle');
   }
 
@@ -90,11 +107,12 @@ export default function Train() {
           {Math.min(doneToday + 1, planned)}/{planned}
         </Txt>
       }
-      footer={footer}>
-      {completed ? (
+      footer={ready ? footer : null}>
+      <MentorStage />
+      {!ready ? null : completed ? (
         <View style={styles.done}>
           <Txt variant="display">{s.train.doneTitle}</Txt>
-          <Txt color="textSecondary">{s.train.doneBody}</Txt>
+          {mentor.quiet && <Txt color="textSecondary">{s.train.doneBody}</Txt>}
         </View>
       ) : (
         <>
