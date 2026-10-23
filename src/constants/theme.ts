@@ -1,6 +1,7 @@
 /**
- * Plotwise design tokens. Warm paper + ink palette with a single ember accent;
- * each outcome-card kind gets its own quiet hue so the notebook reads at a glance.
+ * Plotwise design tokens: Ozan's world. Cream paper, terracotta cloak, brass and
+ * lantern-amber; each outcome-card kind keeps its own warm hue so the notebook
+ * reads at a glance.
  */
 
 import '@/global.css';
@@ -9,40 +10,44 @@ import { Platform } from 'react-native';
 
 export const Colors = {
   light: {
-    text: '#17171B',
-    textSecondary: '#6B6A70',
-    textTertiary: '#9A989F',
-    background: '#F5F3EE',
-    surface: '#FFFFFF',
-    surfaceAlt: '#ECE9E2',
-    border: '#E2DED5',
-    accent: '#C2552D',
-    accentSoft: '#F5E1D7',
+    text: '#2A2420',
+    textSecondary: '#6E6257',
+    textTertiary: '#A09485',
+    background: '#F6EFE3',
+    surface: '#FFFBF4',
+    surfaceAlt: '#EFE4D2',
+    border: '#E6D8C2',
+    accent: '#C2573A',
+    accentDeep: '#9A4129',
+    accentSoft: '#F6DED3',
     onAccent: '#FFFFFF',
+    lantern: '#E8A33C',
     danger: '#B42318',
     assumption: '#B7791F',
-    reframe: '#6B4FBB',
-    experiment: '#2F7D5B',
-    future: '#2B6CB0',
-    insight: '#C2552D',
+    reframe: '#7457B8',
+    experiment: '#3A7D58',
+    future: '#2F6BA8',
+    insight: '#C2573A',
   },
   dark: {
-    text: '#F2F0EA',
-    textSecondary: '#A09EA6',
-    textTertiary: '#6E6C74',
-    background: '#0F0F12',
-    surface: '#18181C',
-    surfaceAlt: '#222228',
-    border: '#2A2A30',
-    accent: '#F07A4E',
-    accentSoft: '#3A2219',
-    onAccent: '#0F0F12',
+    text: '#F3EADD',
+    textSecondary: '#B5A897',
+    textTertiary: '#7D7264',
+    background: '#17130F',
+    surface: '#211B16',
+    surfaceAlt: '#2B231C',
+    border: '#3A2F25',
+    accent: '#F08A5D',
+    accentDeep: '#B8603C',
+    accentSoft: '#3D2419',
+    onAccent: '#1A120D',
+    lantern: '#FFC861',
     danger: '#F97066',
-    assumption: '#E2A93B',
-    reframe: '#A48AF0',
-    experiment: '#5CC495',
-    future: '#68A6F0',
-    insight: '#F07A4E',
+    assumption: '#E8AE45',
+    reframe: '#AE95F0',
+    experiment: '#6CC79A',
+    future: '#74ABEE',
+    insight: '#F08A5D',
   },
 } as const;
 

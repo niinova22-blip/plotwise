@@ -10,7 +10,8 @@ import type {
   Verdict,
 } from '@/ai/contract';
 import { CrisisNotice } from '@/components/crisis-notice';
-import { Button, Card, Chip, ErrorNote, Field, Gap, Loading, Row, Screen, Steps, Txt } from '@/components/ui';
+import { Button, Card, Chip, ErrorNote, Field, Gap, Loading, Row, Screen, Txt } from '@/components/ui';
+import { Journey } from '@/components/journey';
 import { Spacing } from '@/constants/theme';
 import { useAi } from '@/hooks/use-ai';
 import { useI18n } from '@/hooks/use-i18n';
@@ -182,7 +183,7 @@ export default function Lab() {
 
   return (
     <Screen title={s.lab.title} footer={ai.status === 'idle' || loading ? footer : null}>
-      {step !== 'done' && <Steps total={ORDER.length} current={stepIndex} />}
+      {step !== 'done' && <Journey total={ORDER.length} current={stepIndex} />}
       {step !== 'done' && (
         <Txt variant="caption" color="textSecondary">
           {s.lab.steps[stepIndex]}
