@@ -41,16 +41,34 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#F5F3EE",
+          "backgroundColor": "#F6EFE3",
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 96,
           "dark": {
-            "backgroundColor": "#0F0F12",
+            "backgroundColor": "#17130F",
             "image": "./assets/images/splash-icon.png"
           }
         }
       ],
-      "expo-localization"
+      "expo-localization",
+      [
+        "expo-audio",
+        {
+          "microphonePermission": false,
+          "recordAudioAndroid": false
+        }
+      ],
+      "react-native-blob-util",
+      "@kesha-antonov/react-native-background-downloader",
+      [
+        "expo-build-properties",
+        {
+          "ios": {
+            "deploymentTarget": "17.0"
+          }
+        }
+      ],
+      "expo-asset"
     ],
     "experiments": {
       "typedRoutes": true,

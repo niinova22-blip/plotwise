@@ -1,0 +1,20 @@
+# Install order matters (see setup.sh): torch first from the CUDA 12.8 index
+# (RTX 50-series needs it), then chatterbox-tts with --no-deps because it pins
+# torch 2.6, then these.
+librosa==0.11.0
+s3tokenizer
+transformers==5.2.0
+diffusers==0.29.0
+resemble-perth>=1.0.0
+conformer==0.3.2
+safetensors==0.5.3
+spacy-pkuseg
+pykakasi==2.3.0
+pyloudnorm
+omegaconf
+numpy<2.0.0
+soundfile
+kokoro>=0.9.4
+misaki[en]>=0.9.4
+faster-whisper
+pytest

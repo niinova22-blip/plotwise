@@ -8,6 +8,11 @@ import { Button, Card, Chip, ErrorNote, Field, Gap, Loading, Row, Screen, Txt } 
 import { Spacing, type ThemeColor } from '@/constants/theme';
 import { useAi } from '@/hooks/use-ai';
 import { useI18n } from '@/hooks/use-i18n';
+import { useMentor } from '@/mentor/mentor-provider';
+import { getScript, voicedLine } from '@/mentor/script';
+import type { Line } from '@/mentor/script/types';
+import { MentorStage } from '@/mentor/stage';
+import { useNarration } from '@/mentor/use-narration';
 import { useTheme } from '@/hooks/use-theme';
 import { useStore } from '@/store/app-store';
 import { newId } from '@/store/ids';
@@ -44,9 +49,13 @@ function Timeline({ scenario }: { scenario: Scenario }) {
 }
 
 export default function Future() {
-  const { s } = useI18n();
+  const { s, lang } = useI18n();
   const { dispatch } = useStore();
   const ai = useAi();
+  const mentor = useMentor();
+  const script = getScript(lang);
+  const [reacting, setReacting] = useState(false);
+  const [offer, setOffer] = useState(false);
 
   const [step, setStep] = useState<Step>('goal');
   const [goal, setGoal] = useState('');
@@ -61,6 +70,20 @@ export default function Future() {
   const [takeaway, setTakeaway] = useState('');
   const [explored, setExplored] = useState<{ scenario: Scenario; turns: Turn[]; closing: FutureStepRes; takeaway: string }[]>([]);
   const [retry, setRetry] = useState<(() => void) | null>(null);
+
+  const voiced = (text: string | undefined) => (text ? voicedLine(lang, text) : null);
+  const lastTwist = turns[turns.length - 1]?.twist;
+  const twistLine = voiced(lastTwist);
+  const insightLine = voiced(closing?.insight);
+  const narration: Record<Step, Line[] | null> = {
+    goal: script.future.goal,
+    scenarios: script.future.scenarios,
+    // The story step speaks again after each turn: the twist first, then the next decision.
+    story: turns.length === 0 ? [...script.future.story, ...script.future.decision] : [...script.future.twist, ...(twistLine ? [twistLine] : []), ...script.future.decision],
+    closing: [...script.future.closing, ...(insightLine ? [insightLine] : [])],
+    done: script.future.done,
+  };
+  const ready = useNarration(narration[step], `${step}-${turns.length}-${active ?? -1}-${lang}`);
 
   const base = () => ({ goal: goal.trim(), horizon: s.future.horizons[horizon], context: context.trim() });
 
@@ -77,6 +100,15 @@ export default function Future() {
         setStep('scenarios');
       }
     });
+
+  async function submitGoal() {
+    setReacting(true);
+    const r = await mentor.react(goal.trim());
+    setReacting(false);
+    if (r.crisis === 'block') ai.setStatus('crisis');
+    else if (r.crisis === 'offer') setOffer(true);
+    else imagine();
+  }
 
   function enter(i: number) {
     setActive(i);
@@ -154,17 +186,27 @@ export default function Future() {
   const loading = ai.status === 'loading';
   const failed = ai.status === 'error' || ai.status === 'quota';
 
-  if (ai.status === 'crisis') {
+  if (ai.status === 'crisis' || offer) {
     return (
       <Screen title={s.future.title}>
-        <CrisisNotice onBack={() => router.replace('/')} />
+        <CrisisNotice
+          onBack={() => router.replace('/')}
+          onContinue={
+            offer
+              ? () => {
+                  setOffer(false);
+                  imagine();
+                }
+              : undefined
+          }
+        />
       </Screen>
     );
   }
 
   let footer: React.ReactNode = null;
   if (step === 'goal')
-    footer = <Button label={s.future.generate} onPress={imagine} disabled={goal.trim().length < 8} loading={loading} />;
+    footer = <Button label={s.future.generate} onPress={submitGoal} disabled={goal.trim().length < 8} loading={loading || reacting} />;
   if (step === 'closing')
     footer = (
       <View style={styles.footerCol}>
@@ -187,10 +229,11 @@ export default function Future() {
   const exploredKinds = new Set(explored.map((e) => e.scenario.kind));
 
   return (
-    <Screen title={s.future.title} footer={failed ? null : footer}>
+    <Screen title={s.future.title} footer={failed || !ready ? null : footer}>
+      <MentorStage />
       {failed && <ErrorNote quota={ai.status === 'quota'} onRetry={() => retry?.()} />}
 
-      {step === 'goal' && (
+      {ready && step === 'goal' && (
         <>
           <Txt variant="title">{s.future.goalTitle}</Txt>
           <Field value={goal} onChangeText={setGoal} placeholder={s.future.goalPlaceholder} minHeight={110} autoFocus />
@@ -212,12 +255,14 @@ export default function Future() {
         </>
       )}
 
-      {step === 'scenarios' && (
+      {ready && step === 'scenarios' && (
         <>
           <Txt variant="title">{s.future.scenariosTitle}</Txt>
-          <Txt variant="small" color="textTertiary">
-            {s.future.disclaimer}
-          </Txt>
+          {mentor.quiet && (
+            <Txt variant="small" color="textTertiary">
+              {s.future.disclaimer}
+            </Txt>
+          )}
           {scenarios.map((sc, i) => (
             <Card key={i} accent={KIND_COLOR[sc.kind]}>
               <Txt variant="caption" color={KIND_COLOR[sc.kind]}>
@@ -261,7 +306,7 @@ export default function Future() {
               ) : null}
             </View>
           ))}
-          {decision && !loading && (
+          {ready && decision && !loading && (
             <>
               <Gap size="two" />
               <Txt variant="caption" color="accent">
@@ -280,7 +325,7 @@ export default function Future() {
         </>
       )}
 
-      {step === 'closing' && closing && (
+      {ready && step === 'closing' && closing && (
         <>
           {closing.narrative ? <Txt>{closing.narrative}</Txt> : null}
           <Txt variant="title">{s.future.closingTitle}</Txt>
@@ -297,7 +342,7 @@ export default function Future() {
         </>
       )}
 
-      {step === 'done' && (
+      {ready && step === 'done' && (
         <View style={styles.done}>
           <Txt variant="display">{s.lab.finishTitle}</Txt>
           <Button label={s.lab.toNotebook} onPress={() => router.replace('/notebook')} />

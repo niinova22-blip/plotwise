@@ -16,6 +16,7 @@ import {
   type TextStyle,
   type ViewStyle,
 } from 'react-native';
+import Animated, { FadeInDown, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Fonts, MaxContentWidth, Radius, Spacing, type ThemeColor } from '@/constants/theme';
@@ -115,6 +116,48 @@ export function Screen({
   );
 }
 
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
+
+/** Pressable that gives a soft spring squeeze, used by every tappable surface. */
+function Press({
+  onPress,
+  disabled,
+  style,
+  children,
+  accessibilityLabel,
+  accessibilityState,
+}: {
+  onPress: () => void;
+  disabled?: boolean;
+  style: StyleProp<ViewStyle>;
+  children: ReactNode;
+  accessibilityLabel?: string;
+  accessibilityState?: { disabled?: boolean; busy?: boolean; selected?: boolean };
+}) {
+  const scale = useSharedValue(1);
+  const anim = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
+  return (
+    <AnimatedPressable
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel}
+      accessibilityState={accessibilityState}
+      disabled={disabled}
+      onPressIn={() => {
+        scale.set(withSpring(0.97, { damping: 18, stiffness: 420 }));
+      }}
+      onPressOut={() => {
+        scale.set(withSpring(1, { damping: 14, stiffness: 260 }));
+      }}
+      onPress={() => {
+        tap();
+        onPress();
+      }}
+      style={[style, anim]}>
+      {children}
+    </AnimatedPressable>
+  );
+}
+
 export function Button({
   label,
   onPress,
@@ -135,20 +178,14 @@ export function Button({
     variant === 'primary' ? theme.accent : variant === 'secondary' ? theme.surfaceAlt : 'transparent';
   const fg: ThemeColor = variant === 'primary' ? 'onAccent' : variant === 'secondary' ? 'text' : 'accent';
   const inactive = disabled || loading;
+  // A darker bottom edge gives buttons a soft, tactile step in Ozan's world.
+  const edge = variant === 'primary' ? theme.accentDeep : variant === 'secondary' ? theme.border : 'transparent';
   return (
-    <Pressable
-      accessibilityRole="button"
+    <Press
       accessibilityState={{ disabled: !!inactive, busy: !!loading }}
       disabled={inactive}
-      onPress={() => {
-        tap();
-        onPress();
-      }}
-      style={({ pressed }) => [
-        styles.button,
-        { backgroundColor: bg, opacity: disabled ? 0.4 : pressed ? 0.85 : 1 },
-        style,
-      ]}>
+      onPress={onPress}
+      style={[styles.button, { backgroundColor: bg, borderBottomColor: edge, opacity: disabled ? 0.4 : 1 }, style]}>
       {loading ? (
         <ActivityIndicator color={theme[fg]} />
       ) : (
@@ -156,7 +193,7 @@ export function Button({
           {label}
         </Txt>
       )}
-    </Pressable>
+    </Press>
   );
 }
 
@@ -184,18 +221,18 @@ export function Card({
     accent && { borderLeftWidth: 3, borderLeftColor: theme[accent] },
     style,
   ];
-  if (!onPress) return <View style={base}>{children}</View>;
+  if (!onPress)
+    return (
+      <Animated.View entering={FadeInDown.springify().damping(18)} style={base}>
+        {children}
+      </Animated.View>
+    );
   return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityState={{ selected: !!selected }}
-      onPress={() => {
-        tap();
-        onPress();
-      }}
-      style={({ pressed }) => [base, pressed && { opacity: 0.85 }]}>
-      {children}
-    </Pressable>
+    <Animated.View entering={FadeInDown.springify().damping(18)}>
+      <Press accessibilityState={{ selected: !!selected }} onPress={onPress} style={base}>
+        {children}
+      </Press>
+    </Animated.View>
   );
 }
 
@@ -212,13 +249,9 @@ export function Chip({
 }) {
   const theme = useTheme();
   return (
-    <Pressable
-      accessibilityRole="button"
+    <Press
       accessibilityState={{ selected: !!selected }}
-      onPress={() => {
-        tap();
-        onPress();
-      }}
+      onPress={onPress}
       style={[
         styles.chip,
         {
@@ -229,7 +262,7 @@ export function Chip({
       <Txt variant="small" color={selected ? 'onAccent' : 'text'} style={styles.chipText}>
         {label}
       </Txt>
-    </Pressable>
+    </Press>
   );
 }
 
@@ -264,20 +297,6 @@ export function Field({
         style,
       ]}
     />
-  );
-}
-
-export function Steps({ total, current }: { total: number; current: number }) {
-  const theme = useTheme();
-  return (
-    <View style={styles.steps} accessibilityLabel={`${current + 1} / ${total}`}>
-      {Array.from({ length: total }, (_, i) => (
-        <View
-          key={i}
-          style={[styles.step, { backgroundColor: i <= current ? theme.accent : theme.surfaceAlt }]}
-        />
-      ))}
-    </View>
   );
 }
 
@@ -342,8 +361,9 @@ const styles = StyleSheet.create({
     borderTopWidth: StyleSheet.hairlineWidth,
   },
   button: {
-    minHeight: 52,
+    minHeight: 54,
     borderRadius: Radius.md,
+    borderBottomWidth: 4,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: Spacing.four,
@@ -351,7 +371,7 @@ const styles = StyleSheet.create({
     maxWidth: MaxContentWidth,
     alignSelf: 'center',
   },
-  card: { borderRadius: Radius.md, padding: Spacing.three, gap: Spacing.two },
+  card: { borderRadius: Radius.lg, padding: Spacing.three + Spacing.one, gap: Spacing.two },
   chip: {
     borderRadius: 999,
     borderWidth: StyleSheet.hairlineWidth,
@@ -366,8 +386,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     lineHeight: 24,
   },
-  steps: { flexDirection: 'row', gap: Spacing.one },
-  step: { flex: 1, height: 4, borderRadius: 2 },
   badge: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two },
   dot: { width: 8, height: 8, borderRadius: 4 },
   loading: { alignItems: 'center', gap: Spacing.two, paddingVertical: Spacing.five },

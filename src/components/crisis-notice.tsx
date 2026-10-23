@@ -5,8 +5,11 @@ import { useI18n } from '@/hooks/use-i18n';
 
 import { Button, Card, Txt } from './ui';
 
-/** Shown instead of a thinking flow when the AI flags a possible crisis. */
-export function CrisisNotice({ onBack }: { onBack: () => void }) {
+/**
+ * Shown instead of a thinking flow on a possible crisis. With onContinue (a
+ * softer, meaning-based match) the user may also carry on with their session.
+ */
+export function CrisisNotice({ onBack, onContinue }: { onBack: () => void; onContinue?: () => void }) {
   const { s, lang } = useI18n();
   return (
     <Card accent="danger">
@@ -20,6 +23,7 @@ export function CrisisNotice({ onBack }: { onBack: () => void }) {
         label={s.crisis.helplines}
         onPress={() => WebBrowser.openBrowserAsync('https://findahelpline.com')}
       />
+      {onContinue && <Button label={s.crisis.continue} variant="secondary" onPress={onContinue} />}
       <Button label={s.crisis.back} variant="ghost" onPress={onBack} />
     </Card>
   );

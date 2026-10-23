@@ -8,6 +8,10 @@ import { Radius, Spacing, type ThemeColor } from '@/constants/theme';
 import { useI18n } from '@/hooks/use-i18n';
 import { useTheme } from '@/hooks/use-theme';
 import { fmt } from '@/i18n';
+import { useMentor } from '@/mentor/mentor-provider';
+import { getScript } from '@/mentor/script';
+import { MentorStage } from '@/mentor/stage';
+import { useNarration } from '@/mentor/use-narration';
 import { useStore } from '@/store/app-store';
 import { dayKey, weekDayKeys } from '@/store/ids';
 
@@ -58,14 +62,18 @@ function Door({
 
 export default function Home() {
   const { data } = useStore();
-  const { s } = useI18n();
+  const { s, lang } = useI18n();
   const theme = useTheme();
+  const mentor = useMentor();
   const [now] = useState(() => Date.now());
+  const today = dayKey(now);
+  const doneToday = data.training.filter((t) => t.day === today).length;
+  const activeToday = doneToday > 0 || data.sessions.some((x) => dayKey(x.createdAt) === today);
+  const script = getScript(lang);
+  useNarration(data.profile.onboarded ? (activeToday ? script.home.returning : script.home.first) : null, `home-${lang}`);
 
   if (!data.profile.onboarded) return <Redirect href="/onboarding" />;
 
-  const today = dayKey(now);
-  const doneToday = data.training.filter((t) => t.day === today).length;
   const trainingDone = doneToday >= dailyCount(data.profile.minutes);
   const week = weekDayKeys(now);
   const practiced = new Set(data.training.map((t) => t.day));
@@ -92,12 +100,18 @@ export default function Home() {
   return (
     <Screen back={false}>
       {header}
-      <View style={styles.intro}>
-        <Txt variant="caption" color="textSecondary">
-          {greeting(s)}
-        </Txt>
-        <Txt variant="display">{s.home.question}</Txt>
-      </View>
+      {mentor.quiet ? (
+        <View style={styles.intro}>
+          <Txt variant="caption" color="textSecondary">
+            {greeting(s)}
+          </Txt>
+          <Txt variant="display">{s.home.question}</Txt>
+        </View>
+      ) : (
+        <View style={styles.stage}>
+          <MentorStage />
+        </View>
+      )}
 
       {dueFollowUp && (
         <Card accent="experiment" onPress={() => router.push(`/notebook/${dueFollowUp.id}`)}>
@@ -154,6 +168,7 @@ const styles = StyleSheet.create({
     paddingTop: Spacing.three,
   },
   intro: { gap: Spacing.two, paddingVertical: Spacing.four },
+  stage: { paddingTop: Spacing.two },
   door: {
     borderRadius: Radius.lg,
     borderWidth: StyleSheet.hairlineWidth,

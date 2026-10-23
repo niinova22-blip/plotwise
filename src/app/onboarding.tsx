@@ -3,7 +3,8 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Button, Card, Chip, Gap, Row, Screen, Steps, Txt } from '@/components/ui';
+import { Button, Card, Chip, Gap, Row, Screen, Txt } from '@/components/ui';
+import { Journey } from '@/components/journey';
 import { Spacing } from '@/constants/theme';
 import { useI18n } from '@/hooks/use-i18n';
 import type { Lang } from '@/i18n';
@@ -41,7 +42,7 @@ export default function Onboarding() {
   return (
     <Screen back={false} footer={footer}>
       <Gap size="four" />
-      {step > 0 && <Steps total={4} current={step - 1} />}
+      {step > 0 && <Journey total={4} current={step - 1} />}
       <Gap size="three" />
 
       {step === 0 && (

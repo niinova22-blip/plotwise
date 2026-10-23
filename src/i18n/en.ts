@@ -44,6 +44,10 @@ const en = {
     personal: 'Personal decisions',
     general: 'General thinking',
   },
+  mentor: {
+    name: 'Ozan',
+    skip: 'Skip',
+  },
   home: {
     greetingMorning: 'Good morning',
     greetingAfternoon: 'Good afternoon',
@@ -170,6 +174,12 @@ const en = {
     language: 'Language',
     system: 'System',
     theme: 'Theme',
+    mentor: 'Ozan, your guide',
+    mentorVoice: 'Voice',
+    on: 'On',
+    off: 'Off',
+    quietMode: 'Quiet mode',
+    quietHint: 'Hides Ozan and shows short written hints instead.',
     themes: { system: 'System', light: 'Light', dark: 'Dark' },
     dailyMinutes: 'Daily minutes',
     interests: 'Interests',
@@ -190,6 +200,7 @@ const en = {
     emergency: 'If you are in immediate danger, call your local emergency number.',
     helplines: 'Find a free, confidential helpline near you',
     back: 'Go back',
+    continue: 'I’m okay, let’s continue',
   },
 };
 

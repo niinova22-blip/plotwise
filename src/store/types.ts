@@ -21,6 +21,10 @@ export type Profile = {
   goals: Goal[];
   minutes: 5 | 10 | 15;
   installId: string;
+  /** Ozan speaks his lines aloud. */
+  mentorVoice: boolean;
+  /** Hides Ozan and returns to the compact text UI. */
+  quietMode: boolean;
 };
 
 /** A concrete takeaway saved at the end of a session. */

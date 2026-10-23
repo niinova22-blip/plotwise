@@ -16,6 +16,8 @@ function initialData(): AppData {
       goals: [],
       minutes: 5,
       installId: newId(),
+      mentorVoice: true,
+      quietMode: false,
     },
     cards: [],
     sessions: [],
@@ -75,7 +77,9 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
       .then((raw) => {
         if (raw) {
           const parsed = JSON.parse(raw) as AppData;
-          dispatch({ type: 'hydrate', data: { ...initialData(), ...parsed } });
+          const base = initialData();
+          // Merge the profile too, so fields added in later versions get their defaults.
+          dispatch({ type: 'hydrate', data: { ...base, ...parsed, profile: { ...base.profile, ...parsed.profile } } });
         }
       })
       .catch(() => {

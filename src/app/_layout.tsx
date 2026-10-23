@@ -5,6 +5,7 @@ import { useEffect } from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { useSchemeName, useTheme } from '@/hooks/use-theme';
+import { MentorProvider } from '@/mentor/mentor-provider';
 import { AppStoreProvider, useStore } from '@/store/app-store';
 
 SplashScreen.preventAutoHideAsync();
@@ -25,9 +26,11 @@ function Root() {
     <ThemeProvider
       value={{ ...base, colors: { ...base.colors, background: theme.background, card: theme.surface } }}>
       <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
-      <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: theme.background } }}>
-        <Stack.Screen name="onboarding" options={{ gestureEnabled: false }} />
-      </Stack>
+      <MentorProvider>
+        <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: theme.background } }}>
+          <Stack.Screen name="onboarding" options={{ gestureEnabled: false }} />
+        </Stack>
+      </MentorProvider>
     </ThemeProvider>
   );
 }

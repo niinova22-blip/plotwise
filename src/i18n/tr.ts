@@ -46,6 +46,10 @@ const tr: Dict = {
     personal: 'Kişisel kararlar',
     general: 'Genel düşünme',
   },
+  mentor: {
+    name: 'Ozan',
+    skip: 'Atla',
+  },
   home: {
     greetingMorning: 'Günaydın',
     greetingAfternoon: 'İyi günler',
@@ -172,6 +176,12 @@ const tr: Dict = {
     language: 'Dil',
     system: 'Sistem',
     theme: 'Tema',
+    mentor: 'Rehberin Ozan',
+    mentorVoice: 'Ses',
+    on: 'Açık',
+    off: 'Kapalı',
+    quietMode: 'Sade mod',
+    quietHint: 'Ozan’ı gizler, yerine kısa yazılı ipuçları gösterir.',
     themes: { system: 'Sistem', light: 'Açık', dark: 'Koyu' },
     dailyMinutes: 'Günlük dakika',
     interests: 'İlgi alanları',
@@ -192,6 +202,7 @@ const tr: Dict = {
     emergency: 'Acil tehlikedeysen 112’yi ara.',
     helplines: 'Yakınındaki ücretsiz ve gizli destek hattını bul',
     back: 'Geri dön',
+    continue: 'İyiyim, devam edelim',
   },
 };
 

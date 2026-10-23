@@ -10,10 +10,16 @@ import type {
   Verdict,
 } from '@/ai/contract';
 import { CrisisNotice } from '@/components/crisis-notice';
-import { Button, Card, Chip, ErrorNote, Field, Gap, Loading, Row, Screen, Steps, Txt } from '@/components/ui';
+import { Button, Card, Chip, ErrorNote, Field, Gap, Loading, Row, Screen, Txt } from '@/components/ui';
+import { Journey } from '@/components/journey';
 import { Spacing } from '@/constants/theme';
 import { useAi } from '@/hooks/use-ai';
 import { useI18n } from '@/hooks/use-i18n';
+import { useMentor } from '@/mentor/mentor-provider';
+import { getScript, voicedLine } from '@/mentor/script';
+import type { Line } from '@/mentor/script/types';
+import { MentorStage } from '@/mentor/stage';
+import { useNarration } from '@/mentor/use-narration';
 import { scheduleFollowUp } from '@/notifications';
 import { useStore } from '@/store/app-store';
 import { newId } from '@/store/ids';
@@ -24,9 +30,14 @@ const ORDER: Step[] = ['describe', 'clarify', 'assumptions', 'reframe', 'weigh',
 const FOLLOW_UP_MS = 3 * 24 * 60 * 60 * 1000;
 
 export default function Lab() {
-  const { s } = useI18n();
+  const { s, lang } = useI18n();
   const { dispatch } = useStore();
   const ai = useAi();
+  const mentor = useMentor();
+  const script = getScript(lang);
+  const [reacting, setReacting] = useState(false);
+  // A meaning-based crisis match shows support first, with the option to continue.
+  const [offer, setOffer] = useState(false);
 
   const [step, setStep] = useState<Step>('describe');
   const [problem, setProblem] = useState('');
@@ -42,6 +53,23 @@ export default function Lab() {
   const [chosenExperiment, setChosenExperiment] = useState<number | null>(null);
   const [ownExperiment, setOwnExperiment] = useState('');
   const [retry, setRetry] = useState<(() => void) | null>(null);
+
+  const voiced = (texts: string[]) => texts.map((t) => voicedLine(lang, t)).filter((l): l is Line => !!l);
+  const provocationLines = () => {
+    if (!reframe) return script.lab.reframe;
+    const v = voicedLine(lang, reframe.provocation);
+    return [...script.lab.reframe, ...(v ? [...script.lab.provocation, v] : script.lab.provocationLeadIn)];
+  };
+  const narration: Record<Step, Line[] | null> = {
+    describe: script.lab.describe,
+    clarify: [...script.lab.clarify, ...voiced(clarify?.questions ?? [])],
+    assumptions: script.lab.assumptions,
+    reframe: provocationLines(),
+    weigh: script.lab.weigh,
+    experiment: script.lab.experiment,
+    done: script.lab.done,
+  };
+  const ready = useNarration(narration[step], `${step}-${lang}`);
 
   const qa = () =>
     (clarify?.questions ?? []).map((q, i) => ({ q, a: answers[i]?.trim() ?? '' }));
@@ -82,6 +110,15 @@ export default function Lab() {
         setStep('reframe');
       }
     });
+
+  async function submitProblem() {
+    setReacting(true);
+    const r = await mentor.react(problem.trim());
+    setReacting(false);
+    if (r.crisis === 'block') ai.setStatus('crisis');
+    else if (r.crisis === 'offer') setOffer(true);
+    else goClarify();
+  }
 
   const goWeigh = () =>
     attempt(async () => {
@@ -155,7 +192,7 @@ export default function Lab() {
 
   let footer: React.ReactNode = null;
   if (step === 'describe')
-    footer = <Button label={s.common.continue} onPress={goClarify} disabled={problem.trim().length < 8} loading={loading} />;
+    footer = <Button label={s.common.continue} onPress={submitProblem} disabled={problem.trim().length < 8} loading={loading || reacting} />;
   if (step === 'clarify')
     footer = <Button label={s.common.continue} onPress={goAssumptions} loading={loading} />;
   if (step === 'assumptions')
@@ -172,36 +209,48 @@ export default function Lab() {
       />
     );
 
-  if (ai.status === 'crisis') {
+  if (ai.status === 'crisis' || offer) {
     return (
       <Screen title={s.lab.title}>
-        <CrisisNotice onBack={() => router.replace('/')} />
+        <CrisisNotice
+          onBack={() => router.replace('/')}
+          onContinue={
+            offer
+              ? () => {
+                  setOffer(false);
+                  goClarify();
+                }
+              : undefined
+          }
+        />
       </Screen>
     );
   }
 
   return (
-    <Screen title={s.lab.title} footer={ai.status === 'idle' || loading ? footer : null}>
-      {step !== 'done' && <Steps total={ORDER.length} current={stepIndex} />}
+    <Screen title={s.lab.title} footer={ready && (ai.status === 'idle' || loading) ? footer : null}>
+      {step !== 'done' && <Journey total={ORDER.length} current={stepIndex} />}
       {step !== 'done' && (
         <Txt variant="caption" color="textSecondary">
           {s.lab.steps[stepIndex]}
         </Txt>
       )}
 
+      <MentorStage />
+
       {(ai.status === 'error' || ai.status === 'quota') && (
         <ErrorNote quota={ai.status === 'quota'} onRetry={() => retry?.()} />
       )}
 
-      {step === 'describe' && (
+      {ready && step === 'describe' && (
         <>
           <Txt variant="title">{s.lab.describeTitle}</Txt>
-          <Txt color="textSecondary">{s.lab.describeHint}</Txt>
+          {mentor.quiet && <Txt color="textSecondary">{s.lab.describeHint}</Txt>}
           <Field value={problem} onChangeText={setProblem} placeholder={s.lab.describePlaceholder} minHeight={160} autoFocus />
         </>
       )}
 
-      {step === 'clarify' && clarify && (
+      {ready && step === 'clarify' && clarify && (
         <>
           <Txt color="textSecondary">{clarify.summary}</Txt>
           <Txt variant="title">{s.lab.clarifyTitle}</Txt>
@@ -219,10 +268,10 @@ export default function Lab() {
         </>
       )}
 
-      {step === 'assumptions' && (
+      {ready && step === 'assumptions' && (
         <>
           <Txt variant="title">{s.lab.assumptionsTitle}</Txt>
-          <Txt color="textSecondary">{s.lab.assumptionsHint}</Txt>
+          {mentor.quiet && <Txt color="textSecondary">{s.lab.assumptionsHint}</Txt>}
           {assumptions.map((a, i) => (
             <Card key={i} accent="assumption">
               <Txt variant="heading">{a.text}</Txt>
@@ -258,6 +307,7 @@ export default function Lab() {
               onPress={() => {
                 // The user's own doubt is the most interesting one, so it starts as "might be wrong".
                 setVerdicts({ ...verdicts, [assumptions.length]: 'wrong' });
+                mentor.say(script.lab.ownAssumption);
                 setAssumptions([...assumptions, { text: ownAssumption.trim(), why: '' }]);
                 setOwnAssumption('');
               }}
@@ -266,10 +316,10 @@ export default function Lab() {
         </>
       )}
 
-      {step === 'reframe' && reframe && (
+      {ready && step === 'reframe' && reframe && (
         <>
           <Txt variant="title">{s.lab.reframeTitle}</Txt>
-          <Txt color="textSecondary">{s.lab.reframeHint}</Txt>
+          {mentor.quiet && <Txt color="textSecondary">{s.lab.reframeHint}</Txt>}
           {reframe.reframes.map((r, i) => (
             <Card key={i} accent="reframe" selected={chosenReframe === i} onPress={() => setChosenReframe(i)}>
               <Txt variant="heading">{r.title}</Txt>
@@ -285,7 +335,7 @@ export default function Lab() {
         </>
       )}
 
-      {step === 'weigh' && plan && (
+      {ready && step === 'weigh' && plan && (
         <>
           <Txt variant="title">{s.lab.weighTitle}</Txt>
           <Card accent="experiment">
@@ -307,10 +357,10 @@ export default function Lab() {
         </>
       )}
 
-      {step === 'experiment' && plan && (
+      {ready && step === 'experiment' && plan && (
         <>
           <Txt variant="title">{s.lab.experimentTitle}</Txt>
-          <Txt color="textSecondary">{s.lab.experimentHint}</Txt>
+          {mentor.quiet && <Txt color="textSecondary">{s.lab.experimentHint}</Txt>}
           {plan.experiments.map((e, i) => (
             <Card
               key={i}
@@ -331,10 +381,10 @@ export default function Lab() {
         </>
       )}
 
-      {step === 'done' && (
+      {ready && step === 'done' && (
         <View style={styles.done}>
           <Txt variant="display">{s.lab.finishTitle}</Txt>
-          <Txt color="textSecondary">{s.lab.finishBody}</Txt>
+          {mentor.quiet && <Txt color="textSecondary">{s.lab.finishBody}</Txt>}
           <Button label={s.lab.toNotebook} onPress={() => router.replace('/notebook')} />
           <Button label={s.lab.toHome} variant="secondary" onPress={() => router.replace('/')} />
         </View>
