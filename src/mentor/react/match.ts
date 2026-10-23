@@ -85,7 +85,8 @@ export function match(
   const script = getScript(lang);
   const safeText = text.slice(0, 2000);
 
-  if (looksLikeCrisis(safeText)) return result(pickLine(script.reactions.crisis_selfharm, safeText, recent), 'crisis_selfharm', 'block');
+  // The safety check reads everything; only scoring and line picking use the clipped text.
+  if (looksLikeCrisis(text)) return result(pickLine(script.reactions.crisis_selfharm, safeText, recent), 'crisis_selfharm', 'block');
 
   const universal = () => result(pickLine(script.universal, safeText, recent), null, null);
   if (!vec || protos.length === 0) return universal();

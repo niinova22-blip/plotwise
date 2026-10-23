@@ -63,6 +63,12 @@ describe('crisis phrases', () => {
     expect(match(null, 'I had a terrible day', 'en', [], PROTOS).crisis).toBeNull();
   });
 
+  test('a crisis phrase after 2,000 characters still blocks', () => {
+    const long = 'I keep thinking about work. '.repeat(90) + 'I want to die';
+    expect(long.length).toBeGreaterThan(2000);
+    expect(match(null, long, 'en', [], PROTOS).crisis).toBe('block');
+  });
+
   test('explicit phrases block', () => {
     expect(match(null, 'ölmek istiyorum', 'tr', [], PROTOS).crisis).toBe('block');
     expect(match(norm([1, 0, 0]), 'I want to die', 'en', [], PROTOS).crisis).toBe('block');
