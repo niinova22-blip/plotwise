@@ -20,7 +20,7 @@ ASSETS = HERE.parent.parent / "assets" / "voice"
 
 def words(text: str, lang: str) -> list[str]:
     text = text.replace("İ", "i").replace("I", "ı") if lang == "tr" else text
-    text = unicodedata.normalize("NFC", text.lower())
+    text = unicodedata.normalize("NFC", text.lower()).replace("’", "'").replace("‘", "'")
     return re.findall(r"[\w']+", text)
 
 
