@@ -8,6 +8,7 @@ import { useI18n } from '@/hooks/use-i18n';
 import { cancelAllReminders } from '@/notifications';
 import type { Lang } from '@/i18n';
 import { useStore, wipeStorage } from '@/store/app-store';
+import { formatReport, testReport } from '@/store/report';
 import type { Goal, Profile, ThemePref } from '@/store/types';
 
 const GOALS: Goal[] = ['career', 'startup', 'creativity', 'personal', 'general'];
@@ -32,6 +33,10 @@ export default function Settings() {
       title: 'Plotwise export',
       message: JSON.stringify({ ...data, profile: profileOut }, null, 2),
     });
+  }
+
+  async function shareReport() {
+    await Share.share({ message: formatReport(testReport(data), Constants.expoConfig?.version ?? '?') });
   }
 
   async function deleteAll() {
@@ -124,6 +129,10 @@ export default function Settings() {
           {s.settings.dataBody}
         </Txt>
         <Button label={s.settings.export} variant="secondary" onPress={exportData} />
+        <Button label={s.settings.report} variant="secondary" onPress={shareReport} />
+        <Txt variant="small" color="textTertiary">
+          {s.settings.reportBody}
+        </Txt>
         <Button label={confirm ? s.settings.deleteConfirm : s.settings.deleteAll} variant="ghost" onPress={deleteAll} />
       </Card>
 

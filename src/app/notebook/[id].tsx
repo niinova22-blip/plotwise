@@ -1,7 +1,7 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 
-import { Button, Card, Field, KindBadge, Screen, Txt } from '@/components/ui';
+import { Button, Card, Chip, Field, KindBadge, Row, Screen, Txt } from '@/components/ui';
 import { useI18n } from '@/hooks/use-i18n';
 import { useStore } from '@/store/app-store';
 
@@ -34,6 +34,20 @@ export default function CardDetail() {
       <Txt variant="small" color="textTertiary">
         {date}
       </Txt>
+
+      <Row>
+        <Txt variant="small" color="textSecondary">
+          {s.notebook.usefulQuestion}
+        </Txt>
+        {([true, false] as const).map((v) => (
+          <Chip
+            key={String(v)}
+            label={v ? s.notebook.usefulYes : s.notebook.usefulNo}
+            selected={card.useful === v}
+            onPress={() => dispatch({ type: 'updateCard', id: card.id, patch: { useful: card.useful === v ? undefined : v } })}
+          />
+        ))}
+      </Row>
 
       {card.kind === 'experiment' && (
         <Card accent="experiment">

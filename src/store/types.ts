@@ -38,6 +38,8 @@ export type OutcomeCard = {
   /** Experiments get a check-in a few days later. */
   followUpAt?: number;
   followUpNote?: string;
+  /** The user's answer to "Was this card useful?"; unset until they answer. */
+  useful?: boolean;
 };
 
 export type Session = {
