@@ -30,6 +30,8 @@ type Props = {
   speaking: SharedValue<number>;
   /** Eyes jump here (-1..1) while set, e.g. towards a tapped button. */
   glanceAt?: SharedValue<[number, number] | null>;
+  /** False freezes him, e.g. while his screen is covered by another. */
+  active?: boolean;
 };
 
 const Skin = ({ cx = 132, cy = 110, r = 80 }: { cx?: number; cy?: number; r?: number }) => (
@@ -41,8 +43,8 @@ function Stroke({ d, color, width, opacity = 1 }: { d: string | SharedValue<stri
 }
 
 /** Ozan, the lantern-carrying storyteller. Drawn with Skia, animated on the UI thread. */
-export function Ozan({ size, mood, gesturing, speaking, glanceAt }: Props) {
-  const r = useRig(mood, gesturing, speaking, glanceAt);
+export function Ozan({ size, mood, gesturing, speaking, glanceAt, active = true }: Props) {
+  const r = useRig(mood, gesturing, speaking, glanceAt, active);
   const scale = size / W;
 
   return (
