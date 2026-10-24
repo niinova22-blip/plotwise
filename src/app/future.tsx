@@ -4,6 +4,7 @@ import { StyleSheet, View } from 'react-native';
 
 import type { Decision, FutureStepRes, Scenario } from '@/ai/contract';
 import { CrisisNotice } from '@/components/crisis-notice';
+import { EchoCard } from '@/components/echo-card';
 import { Button, Card, Chip, ErrorNote, Field, Gap, Loading, Row, Screen, Txt } from '@/components/ui';
 import { Spacing, type ThemeColor } from '@/constants/theme';
 import { useAi } from '@/hooks/use-ai';
@@ -15,6 +16,7 @@ import { MentorStage } from '@/mentor/stage';
 import { useNarration } from '@/mentor/use-narration';
 import { useTheme } from '@/hooks/use-theme';
 import { useStore } from '@/store/app-store';
+import { findEcho, type Echo } from '@/store/echo';
 import { newId } from '@/store/ids';
 
 type Step = 'goal' | 'scenarios' | 'story' | 'closing' | 'done';
@@ -50,7 +52,7 @@ function Timeline({ scenario }: { scenario: Scenario }) {
 
 export default function Future() {
   const { s, lang } = useI18n();
-  const { dispatch } = useStore();
+  const { data, dispatch } = useStore();
   const ai = useAi();
   const mentor = useMentor();
   const script = getScript(lang);
@@ -62,6 +64,8 @@ export default function Future() {
   const [horizon, setHorizon] = useState(1);
   const [context, setContext] = useState('');
   const [scenarios, setScenarios] = useState<Scenario[]>([]);
+  // An earlier session on the same topic, recalled once the goal is known.
+  const [echo, setEcho] = useState<Echo | null>(null);
   const [active, setActive] = useState<number | null>(null);
   const [decision, setDecision] = useState<Decision | null>(null);
   const [turns, setTurns] = useState<Turn[]>([]);
@@ -77,7 +81,7 @@ export default function Future() {
   const insightLine = voiced(closing?.insight);
   const narration: Record<Step, Line[] | null> = {
     goal: script.future.goal,
-    scenarios: script.future.scenarios,
+    scenarios: [...(echo && explored.length === 0 ? script.future.echo : []), ...script.future.scenarios],
     // The story step speaks again after each turn: the twist first, then the next decision.
     story: turns.length === 0 ? [...script.future.story, ...script.future.decision] : [...script.future.twist, ...(twistLine ? [twistLine] : []), ...script.future.decision],
     closing: [...script.future.closing, ...(insightLine ? [insightLine] : [])],
@@ -96,6 +100,7 @@ export default function Future() {
     attempt(async () => {
       const out = await ai.call('future.scenarios', base());
       if (out) {
+        setEcho(findEcho(goal.trim(), lang, data.sessions, data.cards));
         setScenarios(out.scenarios);
         setStep('scenarios');
       }
@@ -257,6 +262,7 @@ export default function Future() {
 
       {ready && step === 'scenarios' && (
         <>
+          {echo && explored.length === 0 && <EchoCard echo={echo} />}
           <Txt variant="title">{s.future.scenariosTitle}</Txt>
           {mentor.quiet && (
             <Txt variant="small" color="textTertiary">

@@ -5,9 +5,11 @@ const en: Script = {
   home: {
     first: say('home.first', 'warm', 'Ah, there you are. Come, sit by the lantern for a moment.', "What will you think about today? Let's start the journey."),
     returning: say('home.returning', 'happy', 'Welcome back, traveller. Where shall the lantern point today?'),
+    followUp: say('home.followUp', 'warm', 'Ah, welcome back. A few days ago you set yourself a small experiment.', 'Tap its card and tell me how it went. Even a failed try teaches something.'),
   },
   lab: {
     describe: say('lab.describe', 'warm', 'Every good journey starts with an honest question.', "Tell me what's on your mind, in a few sentences. Speaking is fine too."),
+    echo: say('lab.echo', 'think', 'Hmm, this reminds me of something you thought about before.', 'Look at what you found back then. It might light the way.'),
     clarify: say('lab.clarify', 'curious', 'Before we go on, two small questions.', 'Answer them as briefly as you like.'),
     assumptions: say('lab.assumptions', 'think', 'Every problem hides a few quiet assumptions.', "Mark each one honestly. The interesting ones are those you're unsure about."),
     ownAssumption: say('lab.ownAssumption', 'think', 'Ah, a doubt of your own. Those are often the most useful ones.'),
@@ -20,6 +22,7 @@ const en: Script = {
   },
   future: {
     goal: say('future.goal', 'curious', "Let's peek down a few roads, without pretending to know the future.", 'What decision or goal shall we explore?'),
+    echo: say('future.echo', 'think', 'You have walked near this road before. Here is what you noted then.'),
     scenarios: say('future.scenarios', 'warm', 'Here are three possible futures. None of them is a prophecy.', 'Step into whichever one calls to you.'),
     story: say('future.story', 'warm', "Let's walk into this future together."),
     decision: say('future.decision', 'curious', 'A fork in the road. What would you do?'),

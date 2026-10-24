@@ -15,6 +15,8 @@ const tr: Dict = {
     you: 'Sen',
     yourAnswer: 'Yanıtın…',
     or: 'ya da',
+    echoTitle: 'Önceki bir oturumdan',
+    echoLearned: 'Ne öğrendin',
   },
   app: {
     name: 'Plotwise',

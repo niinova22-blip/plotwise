@@ -5,9 +5,11 @@ const tr: Script = {
   home: {
     first: say('home.first', 'warm', 'Ah, geldin demek. Gel, fenerin yanına otur biraz.', 'Bugün ne üzerine düşüneceksin? Hadi, yolculuğa başlayalım.'),
     returning: say('home.returning', 'happy', 'Tekrar hoş geldin yolcu. Fener bugün nereyi aydınlatsın?'),
+    followUp: say('home.followUp', 'warm', 'Ah, tekrar hoş geldin. Birkaç gün önce kendine küçük bir deney koymuştun.', 'Kartına dokun ve nasıl geçtiğini anlat bana. Olmayan bir deneme bile bir şey öğretir.'),
   },
   lab: {
     describe: say('lab.describe', 'warm', 'Her güzel yolculuk dürüst bir soruyla başlar.', 'Aklındakini birkaç cümleyle anlat bana. İstersen konuşarak da yazabilirsin.'),
+    echo: say('lab.echo', 'think', 'Hmm, bu bana daha önce düşündüğün bir şeyi hatırlattı.', 'O zaman bulduklarına bir bak. Belki yolu aydınlatır.'),
     clarify: say('lab.clarify', 'curious', 'Devam etmeden önce iki küçük soru.', 'İstediğin kadar kısa cevap verebilirsin.'),
     assumptions: say('lab.assumptions', 'think', 'Her sorunun içinde birkaç sessiz varsayım saklıdır.', 'Her birini dürüstçe işaretle. En ilginçleri, emin olmadıklarındır.'),
     ownAssumption: say('lab.ownAssumption', 'think', 'Ah, senin kendi şüphen. Genelde en işe yarayanlar bunlardır.'),
@@ -20,6 +22,7 @@ const tr: Script = {
   },
   future: {
     goal: say('future.goal', 'curious', 'Geleceği biliyormuş gibi yapmadan, birkaç yola göz atalım.', 'Hangi kararı ya da hedefi keşfedelim?'),
+    echo: say('future.echo', 'think', 'Bu yolun yakınından daha önce de geçmiştin. İşte o zaman not ettiğin şey.'),
     scenarios: say('future.scenarios', 'warm', 'İşte üç olası gelecek. Hiçbiri kehanet değil.', 'Hangisi seni çağırıyorsa ona adım at.'),
     story: say('future.story', 'warm', 'Bu geleceğe birlikte yürüyelim.'),
     decision: say('future.decision', 'curious', 'Yol ikiye ayrılıyor. Sen ne yapardın?'),

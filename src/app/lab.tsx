@@ -10,6 +10,7 @@ import type {
   Verdict,
 } from '@/ai/contract';
 import { CrisisNotice } from '@/components/crisis-notice';
+import { EchoCard } from '@/components/echo-card';
 import { Button, Card, Chip, ErrorNote, Field, Gap, Loading, Row, Screen, Txt } from '@/components/ui';
 import { Journey } from '@/components/journey';
 import { Spacing } from '@/constants/theme';
@@ -22,6 +23,7 @@ import { MentorStage } from '@/mentor/stage';
 import { useNarration } from '@/mentor/use-narration';
 import { scheduleFollowUp } from '@/notifications';
 import { useStore } from '@/store/app-store';
+import { findEcho, type Echo } from '@/store/echo';
 import { newId } from '@/store/ids';
 import type { OutcomeCard } from '@/store/types';
 
@@ -31,7 +33,7 @@ const FOLLOW_UP_MS = 3 * 24 * 60 * 60 * 1000;
 
 export default function Lab() {
   const { s, lang } = useI18n();
-  const { dispatch } = useStore();
+  const { data, dispatch } = useStore();
   const ai = useAi();
   const mentor = useMentor();
   const script = getScript(lang);
@@ -42,6 +44,8 @@ export default function Lab() {
   const [step, setStep] = useState<Step>('describe');
   const [problem, setProblem] = useState('');
   const [clarify, setClarify] = useState<LabClarifyRes | null>(null);
+  // An earlier session on the same topic, recalled once the problem is known.
+  const [echo, setEcho] = useState<Echo | null>(null);
   const [answers, setAnswers] = useState<string[]>([]);
   const [assumptions, setAssumptions] = useState<LabAssumptionsRes['assumptions']>([]);
   const [verdicts, setVerdicts] = useState<Record<number, Verdict>>({});
@@ -62,7 +66,7 @@ export default function Lab() {
   };
   const narration: Record<Step, Line[] | null> = {
     describe: script.lab.describe,
-    clarify: [...script.lab.clarify, ...voiced(clarify?.questions ?? [])],
+    clarify: [...(echo ? script.lab.echo : []), ...script.lab.clarify, ...voiced(clarify?.questions ?? [])],
     assumptions: script.lab.assumptions,
     reframe: provocationLines(),
     weigh: script.lab.weigh,
@@ -85,6 +89,7 @@ export default function Lab() {
     attempt(async () => {
       const out = await ai.call('lab.clarify', { problem: problem.trim() });
       if (out) {
+        setEcho(findEcho(problem.trim(), lang, data.sessions, data.cards));
         setClarify(out);
         setAnswers(out.questions.map(() => ''));
         setStep('clarify');
@@ -252,6 +257,7 @@ export default function Lab() {
 
       {ready && step === 'clarify' && clarify && (
         <>
+          {echo && <EchoCard echo={echo} />}
           <Txt color="textSecondary">{clarify.summary}</Txt>
           <Txt variant="title">{s.lab.clarifyTitle}</Txt>
           {clarify.questions.map((q, i) => (

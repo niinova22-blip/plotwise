@@ -13,6 +13,8 @@ const en = {
     you: 'You',
     yourAnswer: 'Your answer…',
     or: 'or',
+    echoTitle: 'From an earlier session',
+    echoLearned: 'What you learned',
   },
   app: {
     name: 'Plotwise',

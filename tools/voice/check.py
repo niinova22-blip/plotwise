@@ -46,14 +46,18 @@ def main() -> None:
     ap.add_argument("--lang", required=True, choices=["en", "tr"])
     ap.add_argument("--max-wer", type=float, default=0.15)
     ap.add_argument("--model", default="small")
+    ap.add_argument("--ids", default="", help="comma-separated ids to check (default: all)")
     args = ap.parse_args()
 
     from faster_whisper import WhisperModel
 
     model = WhisperModel(args.model, device="cpu", compute_type="int8")
     cache = json.loads((HERE / "out" / "cache.json").read_text(encoding="utf-8"))
+    ids = {i for i in args.ids.split(",") if i}
     bad, scores = [], []
     for line_id, e in sorted(cache.get(args.lang, {}).items()):
+        if ids and line_id not in ids:
+            continue
         segments, _ = model.transcribe(load(ASSETS / e["file"]), language=args.lang, beam_size=5)
         heard = " ".join(s.text for s in segments)
         score = wer(words(e["text"], args.lang), words(heard, args.lang))

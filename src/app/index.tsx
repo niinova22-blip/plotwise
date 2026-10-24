@@ -70,7 +70,12 @@ export default function Home() {
   const doneToday = data.training.filter((t) => t.day === today).length;
   const activeToday = doneToday > 0 || data.sessions.some((x) => dayKey(x.createdAt) === today);
   const script = getScript(lang);
-  useNarration(data.profile.onboarded ? (activeToday ? script.home.returning : script.home.first) : null, `home-${lang}`);
+  const dueFollowUp = data.cards.find(
+    (c) => c.kind === 'experiment' && c.followUpAt && c.followUpAt <= now && !c.followUpNote,
+  );
+  // A waiting experiment check-in comes first; it is the thread back to an earlier session.
+  const greet = dueFollowUp ? script.home.followUp : activeToday ? script.home.returning : script.home.first;
+  useNarration(data.profile.onboarded ? greet : null, `home-${lang}-${dueFollowUp?.id ?? ''}`);
 
   if (!data.profile.onboarded) return <Redirect href="/onboarding" />;
 
@@ -78,10 +83,6 @@ export default function Home() {
   const week = weekDayKeys(now);
   const practiced = new Set(data.training.map((t) => t.day));
   const weekCount = week.filter((d) => practiced.has(d)).length;
-  const dueFollowUp = data.cards.find(
-    (c) => c.kind === 'experiment' && c.followUpAt && c.followUpAt <= now && !c.followUpNote,
-  );
-
   const header = (
     <View style={styles.topRow}>
       <Pressable accessibilityRole="button" hitSlop={10} onPress={() => router.push('/notebook')}>

@@ -24,9 +24,9 @@ export type SituationId = (typeof SITUATIONS)[number];
 type Steps<K extends string> = Record<K, Line[]>;
 
 export type Script = {
-  home: Steps<'first' | 'returning'>;
-  lab: Steps<'describe' | 'clarify' | 'assumptions' | 'ownAssumption' | 'reframe' | 'provocation' | 'provocationLeadIn' | 'weigh' | 'experiment' | 'done'>;
-  future: Steps<'goal' | 'scenarios' | 'story' | 'decision' | 'twist' | 'closing' | 'done'>;
+  home: Steps<'first' | 'returning' | 'followUp'>;
+  lab: Steps<'describe' | 'echo' | 'clarify' | 'assumptions' | 'ownAssumption' | 'reframe' | 'provocation' | 'provocationLeadIn' | 'weigh' | 'experiment' | 'done'>;
+  future: Steps<'goal' | 'echo' | 'scenarios' | 'story' | 'decision' | 'twist' | 'closing' | 'done'>;
   train: Steps<'intro' | 'feedback' | 'done' | 'another'>;
   /** Two or more lines per situation; one is picked, avoiding recent ones. */
   reactions: Record<SituationId, Line[]>;
