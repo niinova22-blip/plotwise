@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { useDerivedValue, useFrameCallback, useSharedValue, type SharedValue } from 'react-native-reanimated';
+import { useDerivedValue, useFrameCallback, useReducedMotion, useSharedValue, type SharedValue } from 'react-native-reanimated';
 
 import { arm, browPath, EYE_L, EYE_R, lidEdge, lidPath, lowLidEdge, lowLidPath, mouth } from './rig/geometry';
 import { MOODS, PARAM_ORDER, POSES, type Gesture, type Mood, type ParamName } from './rig/params';
@@ -62,15 +62,19 @@ function initial(): RigState {
 /**
  * Ozan's life on the UI thread: springs, blinks, saccades, breathing, gestures
  * and the jaw following `speaking` (0..1). Returns animated values for the
- * renderer; nothing here touches the JS thread per frame.
+ * renderer; nothing here touches the JS thread per frame. `active` false
+ * freezes him (screen in the background). With Reduce Motion on he keeps his
+ * hands down and his head still; blinks and the jaw stay.
  */
 export function useRig(
   mood: Mood,
   gesturing: boolean,
   speaking: SharedValue<number>,
   glanceAt?: SharedValue<[number, number] | null>,
+  active = true,
 ) {
   const st = useSharedValue<RigState>(initial());
+  const still = useReducedMotion();
 
   useEffect(() => {
     const preset = MOODS[mood];
@@ -86,7 +90,7 @@ export function useRig(
   }, [mood, st]);
 
   useEffect(() => {
-    const pose = gesturing ? MOODS[mood].gesture : 'rest';
+    const pose = gesturing && !still ? MOODS[mood].gesture : 'rest';
     const p = POSES[pose];
     st.modify((s) => {
       'worklet';
@@ -99,9 +103,9 @@ export function useRig(
       s.t[I.vis] = p.vis;
       return s;
     });
-  }, [gesturing, mood, st]);
+  }, [gesturing, mood, st, still]);
 
-  useFrameCallback((info) => {
+  const frame = useFrameCallback((info) => {
     'worklet';
     const dt = Math.min(0.05, (info.timeSincePreviousFrame ?? 16) / 1000);
     const glance = glanceAt ? glanceAt.value : null;
@@ -139,14 +143,18 @@ export function useRig(
       s.t[I.jaw] = Math.max(say, s.jawRest);
       if (say > 0.7 && s.time - s.lastPeak > 0.45) {
         s.lastPeak = s.time;
-        if (Math.random() < 0.3) s.v[I.nod] += 18;
-        if ((s.pose === 'open' || s.pose === 'raise') && Math.random() < 0.35) s.v[I.wy] -= 70;
+        if (!still && Math.random() < 0.3) s.v[I.nod] += 18;
+        if (!still && (s.pose === 'open' || s.pose === 'raise') && Math.random() < 0.35) s.v[I.wy] -= 70;
       }
 
       stepSprings(s.x, s.v, s.t, dt);
       return s;
     });
-  });
+  }, active);
+
+  useEffect(() => {
+    frame.setActive(active);
+  }, [frame, active]);
 
   // st.modify notifies readers every frame, so derived values below re-run per frame.
   const x = (name: ParamName) => {
@@ -164,7 +172,7 @@ export function useRig(
   const bodyTransform = useDerivedValue(() => [{ scaleX: 1 + breath.value * 0.006 }, { scaleY: 1 + breath.value * 0.014 }]);
   const headTransform = useDerivedValue(() => {
     const t = st.value.time;
-    const idle = Math.sin(t * 0.37) * 1.2 + Math.sin(t * 0.91) * 0.5;
+    const idle = still ? 0 : Math.sin(t * 0.37) * 1.2 + Math.sin(t * 0.91) * 0.5;
     return [
       { translateY: -breath.value * 1.6 + x('nod') * 0.12 },
       { rotate: ((x('tilt') + idle) * Math.PI) / 180 },

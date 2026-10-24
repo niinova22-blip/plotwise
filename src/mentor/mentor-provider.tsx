@@ -1,4 +1,4 @@
-import { createContext, use, useCallback, useEffect, useMemo, useReducer, useRef, useState, type ReactNode } from 'react';
+import { createContext, use, useCallback, useEffect, useEffectEvent, useMemo, useReducer, useRef, useState, type ReactNode } from 'react';
 import { useFrameCallback, useSharedValue, type SharedValue } from 'react-native-reanimated';
 
 import { useI18n } from '@/hooks/use-i18n';
@@ -69,6 +69,9 @@ export function MentorProvider({ children }: { children: ReactNode }) {
   const embedder = useEmbedder();
   const recent = useRef<string[]>([]);
   const tokenRef = useRef(0);
+  // Bumped by every start() and cancel(), so a reaction that finishes thinking
+  // after the user moved on stays silent.
+  const epoch = useRef(0);
   const resolvers = useRef(new Map<number, () => void>());
 
   // Jaw follows the envelope of whatever line is playing.
@@ -145,17 +148,25 @@ export function MentorProvider({ children }: { children: ReactNode }) {
     return () => clearTimeout(t);
   }, [q.status, q.token, env]);
 
-  // A new language means new lines; drop whatever was queued. Only on a real
-  // change: child screens start speaking before this provider's effects run.
+  // A new language means new lines; drop whatever was queued in the old one.
+  // Only on a real change, and only the old say(): the screen in front has
+  // already started its lines again in the new language (child effects run first).
   const langRef = useRef(lang);
+  const dropStale = useEffectEvent(() => dispatch({ type: 'cancel', token: q.token }));
   useEffect(() => {
     if (langRef.current === lang) return;
     langRef.current = lang;
-    dispatch({ type: 'skip' });
+    dropStale();
   }, [lang]);
+
+  // Turning on quiet mode silences him at once, mid-line included.
+  useEffect(() => {
+    if (quiet) dispatch({ type: 'skip' });
+  }, [quiet]);
 
   const start = useCallback((lines: Line[]) => {
     const token = ++tokenRef.current;
+    epoch.current++;
     // Anything still waiting on an older say() is released: it was replaced.
     for (const [t, resolve] of resolvers.current) {
       resolve();
@@ -174,14 +185,19 @@ export function MentorProvider({ children }: { children: ReactNode }) {
   }, [quiet]);
 
   const say = useCallback((lines: Line[]) => start(lines).done, [start]);
-  const cancel = useCallback((token: number) => dispatch({ type: 'cancel', token }), []);
+  const cancel = useCallback((token: number) => {
+    epoch.current++;
+    dispatch({ type: 'cancel', token });
+  }, []);
 
   const react = useCallback(
     async (text: string) => {
+      const asked = epoch.current;
       const vec = await embedder.embed(text);
       const r = match(vec, text, lang, recent.current);
       recent.current = [r.lineId, ...recent.current].slice(0, 6);
-      if (r.crisis !== 'block') await say([r.gesture ? { ...r.line, gesture: r.gesture } : r.line]);
+      const stillHere = epoch.current === asked;
+      if (r.crisis !== 'block' && stillHere) await say([r.gesture ? { ...r.line, gesture: r.gesture } : r.line]);
       return r;
     },
     [embedder, lang, say],

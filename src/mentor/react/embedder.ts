@@ -1,5 +1,7 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { models, setTelemetryEnabled, useTextEmbedder } from 'react-native-executorch';
+
+import { retryDelayMs } from './retry';
 
 /**
  * Must match tools/embed/build.py so prototype vectors live in the same space.
@@ -24,12 +26,34 @@ function unit(v: Float32Array): Float32Array {
 /**
  * On-device sentence embeddings. The model is fetched once on first launch and
  * cached; until then (or on any error) embed() resolves to null and the
- * reaction engine falls back to its safe universal lines.
+ * reaction engine falls back to its safe universal lines. A failed download
+ * (say, no connection on first launch) is retried with a growing pause and
+ * resumes from the bytes it already has.
  */
 export function useEmbedder(): Embedder {
-  const embedder = useTextEmbedder(MODEL);
+  const [attempt, setAttempt] = useState(0);
+  // Briefly true between attempts: toggling preventLoad is what restarts the download.
+  const [hold, setHold] = useState(false);
+  const embedder = useTextEmbedder(MODEL, { preventLoad: hold });
   const run = embedder.embed;
   const ready = embedder.isReady && !embedder.error && !!run;
+  const failed = !!embedder.error;
+
+  useEffect(() => {
+    if (!failed) return;
+    const t = setTimeout(() => setHold(true), retryDelayMs(attempt));
+    return () => clearTimeout(t);
+  }, [failed, attempt]);
+
+  // Holding clears the error, so the release lives in its own effect.
+  useEffect(() => {
+    if (!hold) return;
+    const t = setTimeout(() => {
+      setHold(false);
+      setAttempt((a) => a + 1);
+    }, 50);
+    return () => clearTimeout(t);
+  }, [hold]);
 
   const embed = useCallback(
     async (text: string) => {

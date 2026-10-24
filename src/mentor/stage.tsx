@@ -1,3 +1,4 @@
+import { useIsFocused } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, useWindowDimensions, View, type GestureResponderEvent } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
@@ -37,6 +38,8 @@ export function MentorStage({ size }: { size?: number }) {
   const theme = useTheme();
   const { s } = useI18n();
   const { width } = useWindowDimensions();
+  // Every screen in the stack has its own stage; only the one in front moves.
+  const focused = useIsFocused();
   const ozanSize = size ?? Math.min(260, width * 0.62);
   const line = m.current ?? m.last;
   const talking = m.status === 'speaking' || m.status === 'waiting';
@@ -58,7 +61,7 @@ export function MentorStage({ size }: { size?: number }) {
   return (
     <View style={styles.wrap}>
       <Pressable accessibilityRole="button" accessibilityLabel={line?.text ?? s.mentor.name} onPress={onTap} style={styles.tap}>
-        <OzanHost size={ozanSize} mood={m.mood} gesturing={m.gesturing} speaking={m.speaking} glanceAt={m.glanceAt} />
+        <OzanHost size={ozanSize} mood={m.mood} gesturing={m.gesturing} speaking={m.speaking} glanceAt={m.glanceAt} active={focused} />
         {line && (
           <Animated.View
             key={m.lineKey}
